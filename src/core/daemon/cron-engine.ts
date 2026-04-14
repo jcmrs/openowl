@@ -217,6 +217,10 @@ export class CronEngine {
         this.generateTokenReport();
         break;
 
+      case "check_cerebrum_staleness":
+        this.checkCerebrumStaleness(action.params?.max_age_days as number ?? 14);
+        break;
+
       case "ai_task":
         await this.runAiTask(action.params as { prompt: string; context_files: string[] });
         break;
@@ -287,6 +291,27 @@ export class CronEngine {
       patterns: flags.map((f) => f.pattern),
     };
     writeJSON(ledgerPath, ledger);
+  }
+
+  private checkCerebrumStaleness(maxAgeDays: number): void {
+    const cerebrumPath = path.join(this.owlDir, "cerebrum.md");
+    if (!fs.existsSync(cerebrumPath)) return;
+
+    const stat = fs.statSync(cerebrumPath);
+    const ageMs = Date.now() - stat.mtimeMs;
+    const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+    if (ageDays > maxAgeDays) {
+      this.logger.warn(
+        `Cerebrum is ${Math.round(ageDays)} days old (max ${maxAgeDays}). ` +
+        `Consider reviewing and updating .owl/cerebrum.md with recent learnings.`
+      );
+      this.broadcast({
+        type: "cerebrum_stale",
+        age_days: Math.round(ageDays),
+        max_age_days: maxAgeDays,
+      });
+    }
   }
 
   private hasOpencode(): boolean {

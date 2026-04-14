@@ -39,23 +39,26 @@ export default plugin;
 export function generateAgentsMdSnippet(): string {
   return `# OpenOwl
 
-@.owl/OWL.md
+This project uses OpenOwl for project intelligence. The OpenOwl plugin injects relevant project knowledge (conventions, do-not-repeat entries, file index) into your system context automatically every turn. You don't need to read .owl/ files to benefit from them.
 
-This project uses OpenOwl for context management. Read and follow .owl/OWL.md every session. Check .owl/cerebrum.md before generating code. Check .owl/anatomy.md before reading files to avoid unnecessary reads.
+## What OpenOwl Provides (automatic)
 
-## What is OpenOwl?
+- **Do-Not-Repeat entries**: Past mistakes injected into context to prevent recurrence
+- **Key Conventions**: Project-specific patterns and preferences
+- **File Index**: Directory summaries and file descriptions for efficient navigation
 
-OpenOwl is a project intelligence middleware for OpenCode. It tracks token usage, maintains a learning memory (cerebrum), logs bugs, and enforces file navigation discipline. It runs as an OpenCode plugin (observational — it can log warnings but cannot block actions) plus an optional daemon for background tasks.
+## How You Contribute
 
-## Plugin vs Model Responsibility
+When you learn something new about the project (a convention, a user preference, a gotcha), append a tagged entry to \`.owl/cerebrum.md\`:
+\`\`\`
+- [scope] YYYY-MM-DD: concise description
+\`\`\`
 
-The OpenOwl plugin monitors your actions and logs warnings when you deviate from best practices (e.g., re-reading files, ignoring anatomy.md). However, since OpenCode plugins are observational, **you** are responsible for actually following the rules in .owl/OWL.md. The plugin reminds; you comply.
+## .owl/ File Reference
 
-## Quick Reference
-
-- \`.owl/anatomy.md\` — file index with descriptions and token estimates
-- \`.owl/cerebrum.md\` — learning memory (preferences, learnings, do-not-repeat)
-- \`.owl/memory.md\` — chronological action log
-- \`.owl/buglog.json\` — bug database for cross-session recall
-- \`.owl/config.json\` — OpenOwl configuration`;
+- \`.owl/cerebrum.md\` — cross-session learning memory (read to WRITE new entries, not for consumption)
+- \`.owl/anatomy.md\` — file index with descriptions (auto-updated, readable on demand)
+- \`.owl/buglog.json\` — bug database (auto-populated, check before debugging)
+- \`.owl/config.json\` — OpenOwl configuration
+`;
 }

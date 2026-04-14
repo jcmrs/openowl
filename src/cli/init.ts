@@ -162,88 +162,41 @@ function writeTemplateFile(templatesDir: string, owlDir: string, file: string): 
 
 function generateTemplate(destPath: string, file: string): void {
   const templates: Record<string, string> = {
-    "OWL.md": `# OpenOwl Operating Protocol
+    "OWL.md": `# OpenOwl Contribution Guide
 
-You are working in an OpenOwl-managed project. These rules apply every turn.
+You are working in an OpenOwl-managed project. The plugin injects relevant project knowledge into your system context every turn — you don't need to read .owl/ files to benefit from them.
 
-> **Note:** OpenOwl runs as an OpenCode plugin and cannot enforce these rules mechanically. The plugin will remind you via log messages, but you are responsible for following them manually. Future versions may add mechanism-based enforcement.
+## What OpenOwl Does For You Automatically
 
-## File Navigation
+- Injects do-not-repeat entries, key conventions, and file index into your context every turn
+- Logs bugs to \`.owl/buglog.json\` when it detects error patterns in your edits
+- Updates \`.owl/anatomy.md\` when files are created, deleted, or modified
+- Tracks your session for token analysis
 
-1. Check \`.owl/anatomy.md\` BEFORE reading any file. It has a 2-3 line description and token estimate for every file in the project.
-2. If the description in anatomy.md is sufficient for your task, do NOT read the full file.
-3. If a file is not in anatomy.md, search with Grep/Glob, then update anatomy.md with the new entry.
+## When You Learn Something New
 
-## Code Generation
+Append a tagged entry to \`.owl/cerebrum.md\`:
 
-1. Before generating code, read \`.owl/cerebrum.md\` and respect every entry.
-2. Check the \`## Do-Not-Repeat\` section — these are past mistakes that must not recur.
-3. Follow all conventions in \`## Key Learnings\` and \`## User Preferences\`.
+\`\`\`
+- [scope] YYYY-MM-DD: concise description
+\`\`\`
 
-## After Actions
+**Add entries when:**
+- The user corrects your approach
+- You discover a project convention not obvious from the code
+- You find an API behavior that surprised you
+- You make an architectural decision worth remembering
 
-1. After every significant action, append a one-line entry to \`.owl/memory.md\`:
-   \`| HH:MM | description | file(s) | outcome | ~tokens |\`
-2. After creating, deleting, or renaming files: update \`.owl/anatomy.md\`.
+## When You Fix a Bug
 
-## Cerebrum Learning (MANDATORY — every session)
-
-OpenOwl's value comes from learning across sessions. You MUST update \`.owl/cerebrum.md\` whenever you learn something useful. This is not optional.
-
-**Update \`## User Preferences\` when the user:**
-- Corrects your approach ("no, do it this way instead")
-- Expresses a style preference (naming, structure, formatting)
-- Shows a preferred workflow or tool choice
-- Rejects a suggestion — record what they preferred instead
-
-**Update \`## Key Learnings\` when you discover:**
-- A project convention not obvious from the code
-- A framework-specific pattern this project uses
-- An API behavior that surprised you
-
-**Update \`## Do-Not-Repeat\` (with date) when:**
-- The user corrects a mistake you made
-- You try something that fails and find the right approach
-
-**Update \`## Decision Log\` when:**
-- A significant architectural or technical choice is made
-
-**The bar is LOW.** If in doubt, add it.
-
-## Bug Logging (MANDATORY)
-
-**Log a bug to \`.owl/buglog.json\` whenever ANY of these happen:**
-- The user reports an error, bug, or problem
-- A test fails or a command produces an error
-- You fix something that was broken
-
-**Before fixing:** Read \`.owl/buglog.json\` first — the fix may already be known.
-
-**After fixing:** ALWAYS append to \`.owl/buglog.json\`.
-
-**The threshold is LOW.** When in doubt, log it.
-
-## Token Discipline
-
-- Never re-read a file already read this session unless it was modified since.
-- Prefer anatomy.md descriptions over full file reads when possible.
-- Prefer targeted Grep over full file reads when searching for specific code.
-
-## Design QC
-
-When the user asks you to check, evaluate, or improve the design/UI:
-1. Run \`openowl designqc\` via Bash to capture screenshots.
-2. Read the captured screenshot images from \`.owl/designqc-captures/\`.
-3. Evaluate and provide specific feedback.
+The system auto-logs to \`.owl/buglog.json\`. You don't need to do anything. If the user reports a bug, check \`.owl/buglog.json\` first.
 
 ## Session End
 
-Before ending or when asked to wrap up:
-1. Write a session summary to \`.owl/memory.md\`.
-2. Review the session: did you learn anything? Did you fix a bug? If yes, update \`.owl/cerebrum.md\` and/or \`.owl/buglog.json\`.
+Review: did you learn anything this session? If yes, add it to \`.owl/cerebrum.md\`.
 `,
     "identity.md": `# Identity\n\n- **Name:** Owl\n- **Role:** AI development assistant for this project\n- **Tone:** Direct, concise, technically precise\n`,
-    "cerebrum.md": `# Cerebrum\n\n> OpenOwl's learning memory.\n\n## User Preferences\n\n## Key Learnings\n\n## Do-Not-Repeat\n\n## Decision Log\n`,
+    "cerebrum.md": `# Cerebrum\n\n> OpenOwl's cross-session learning memory. The plugin injects relevant entries into your system context every turn — you don't need to read this file before coding. Update it when you learn something new.\n\n## Do-Not-Repeat\n\n<!-- Mistakes that MUST NOT recur. -->\n\n## Key Learnings\n\n<!-- Project conventions discovered during development. Add with [scope] tags. -->\n\n## User Preferences\n\n<!-- How the user likes things done. Add with [scope] tags. -->\n\n## Decision Log\n\n<!-- Architectural decisions with rationale. -->\n`,
     "memory.md": `# Memory\n\n> Chronological action log.\n`,
     "anatomy.md": `# anatomy.md\n\n> Project structure index. Pending initial scan.\n`,
     "config.json": JSON.stringify({
@@ -258,11 +211,56 @@ Before ending or when asked to wrap up:
         daemon: { port: 18790, log_level: "info" },
         dashboard: { enabled: true, port: 18791 },
         designqc: { enabled: true, viewports: [{ name: "desktop", width: 1440, height: 900 }, { name: "mobile", width: 375, height: 812 }], max_screenshots: 6, chrome_path: null },
+        injection: { enabled: true, max_tokens: 2500, include_project: true, include_dnr: true, include_conventions: true, include_anatomy: true, include_bugs: true },
       },
     }, null, 2),
     "token-ledger.json": JSON.stringify({ version: 1, created_at: "", lifetime: { total_tokens_estimated: 0, total_reads: 0, total_writes: 0, total_sessions: 0, anatomy_hits: 0, anatomy_misses: 0, repeated_reads_blocked: 0, estimated_savings_vs_bare_cli: 0 }, sessions: [], daemon_usage: [], waste_flags: [], optimization_report: { last_generated: null, patterns: [] } }, null, 2),
     "buglog.json": JSON.stringify({ version: 1, bugs: [] }, null, 2),
-    "cron-manifest.json": JSON.stringify({ version: 1, tasks: [] }, null, 2),
+    "cron-manifest.json": JSON.stringify({
+      version: 1,
+      tasks: [
+        {
+          id: "anatomy_rescan",
+          name: "Anatomy Rescan",
+          schedule: "0 */6 * * *",
+          description: "Rescan project anatomy every 6 hours",
+          action: { type: "scan_project" },
+          retry: { max_attempts: 2, backoff: "linear", base_delay_seconds: 60 },
+          failsafe: { on_failure: "log", dead_letter: true, alert_after_consecutive_failures: 3 },
+          enabled: true,
+        },
+        {
+          id: "cerebrum_staleness",
+          name: "Cerebrum Staleness Check",
+          schedule: "0 9 * * 1",
+          description: "Check if cerebrum.md is stale (weekly on Monday morning)",
+          action: { type: "check_cerebrum_staleness", params: { max_age_days: 14 } },
+          retry: { max_attempts: 1, backoff: "linear", base_delay_seconds: 30 },
+          failsafe: { on_failure: "log" },
+          enabled: true,
+        },
+        {
+          id: "memory_consolidation",
+          name: "Memory Consolidation",
+          schedule: "0 3 * * 0",
+          description: "Consolidate old memory entries (weekly on Sunday)",
+          action: { type: "consolidate_memory", params: { older_than_days: 7 } },
+          retry: { max_attempts: 2, backoff: "linear", base_delay_seconds: 60 },
+          failsafe: { on_failure: "log", dead_letter: true },
+          enabled: true,
+        },
+        {
+          id: "token_report",
+          name: "Token Waste Report",
+          schedule: "0 10 * * 1",
+          description: "Generate token optimization report (weekly on Monday)",
+          action: { type: "generate_token_report" },
+          retry: { max_attempts: 1, backoff: "linear", base_delay_seconds: 30 },
+          failsafe: { on_failure: "log" },
+          enabled: true,
+        },
+      ],
+    }, null, 2),
     "cron-state.json": JSON.stringify({ last_heartbeat: null, engine_status: "initialized", execution_log: [], dead_letter_queue: [], upcoming: [] }, null, 2),
   };
 
@@ -326,26 +324,89 @@ function ensureOwlGitignore(projectRoot: string): void {
 function seedCerebrum(owlDir: string, projectRoot: string): void {
   const projectName = detectProjectName(projectRoot);
   const projectDescription = detectProjectDescription(projectRoot);
-  if (!projectName && !projectDescription) return;
+  const framework = detectFramework(projectRoot);
+  const testRunner = detectTestRunner(projectRoot);
+  const pkgManager = detectPackageManager(projectRoot);
+
+  if (!projectName && !framework && !testRunner) return;
 
   const cerebrumPath = path.join(owlDir, "cerebrum.md");
   let cerebrum = readText(cerebrumPath);
-  const projectInfo = [
-    `- **Project:** ${projectName || path.basename(projectRoot)}`,
-    projectDescription ? `- **Description:** ${projectDescription}` : "",
-  ].filter(Boolean).join("\n");
+  const entries: string[] = [];
 
-  cerebrum = cerebrum.replace(
-    /## Key Learnings\n\n<!-- Project-specific conventions discovered during development\. -->/,
-    `## Key Learnings\n\n${projectInfo}`
-  );
-  if (!cerebrum.includes("**Project:**")) {
-    cerebrum = cerebrum.replace(
-      /## Key Learnings\n/,
-      `## Key Learnings\n\n${projectInfo}\n`
-    );
+  if (projectName) {
+    entries.push(`- [project] ${new Date().toISOString().slice(0, 10)}: Project is "${projectName}"${projectDescription ? ` — ${projectDescription}` : ""}`);
   }
+  if (framework) {
+    entries.push(`- [project] ${new Date().toISOString().slice(0, 10)}: Framework: ${framework}`);
+  }
+  if (testRunner) {
+    entries.push(`- [project] ${new Date().toISOString().slice(0, 10)}: Test runner: ${testRunner}`);
+  }
+  if (pkgManager) {
+    entries.push(`- [project] ${new Date().toISOString().slice(0, 10)}: Package manager: ${pkgManager}`);
+  }
+
+  if (entries.length === 0) return;
+
+  const learningBlock = entries.map((e) => `  ${e}`).join("\n");
+  const insertion = `\n${learningBlock}\n`;
+
+  const klIdx = cerebrum.indexOf("## Key Learnings");
+  if (klIdx !== -1) {
+    const afterKl = cerebrum.indexOf("\n", klIdx);
+    cerebrum = cerebrum.slice(0, afterKl + 1) + insertion + cerebrum.slice(afterKl + 1);
+  } else {
+    cerebrum += `\n## Key Learnings\n\n${insertion}`;
+  }
+
   writeText(cerebrumPath, cerebrum);
+}
+
+function detectFramework(projectRoot: string): string {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8"));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    if (deps.next || deps["react-dom"] || deps["@next/router"]) return "Next.js (React)";
+    if (deps.react && !deps.next) return "React";
+    if (deps.vue || deps.nuxt) return "Vue/Nuxt";
+    if (deps["@angular/core"]) return "Angular";
+    if (deps.svelte || deps["@sveltejs/kit"]) return "Svelte/SvelteKit";
+    if (deps.express || deps.fastify) return "Express/Fastify";
+    if (deps.hono) return "Hono";
+    if (deps.nestjs || deps["@nestjs/common"]) return "NestJS";
+    if (deps["@astrojs/compiler"]) return "Astro";
+  } catch {}
+  try {
+    const cargo = fs.readFileSync(path.join(projectRoot, "Cargo.toml"), "utf-8");
+    if (cargo.includes("actix")) return "Actix-web (Rust)";
+    if (cargo.includes("axum")) return "Axum (Rust)";
+    if (cargo.includes("rocket")) return "Rocket (Rust)";
+    return "Rust";
+  } catch {}
+  return "";
+}
+
+function detectTestRunner(projectRoot: string): string {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8"));
+    const devDeps = pkg.devDependencies ?? {};
+    if (devDeps.vitest || devDeps["@testing-library/react"]) return "Vitest + Testing Library";
+    if (devDeps.jest) return "Jest";
+    if (devDeps.mocha) return "Mocha";
+  } catch {}
+  try {
+    if (fs.existsSync(path.join(projectRoot, "pytest.ini")) || fs.existsSync(path.join(projectRoot, "pyproject.toml"))) return "pytest";
+  } catch {}
+  return "";
+}
+
+function detectPackageManager(projectRoot: string): string {
+  if (fs.existsSync(path.join(projectRoot, "pnpm-lock.yaml"))) return "pnpm";
+  if (fs.existsSync(path.join(projectRoot, "yarn.lock"))) return "yarn";
+  if (fs.existsSync(path.join(projectRoot, "bun.lockb"))) return "bun";
+  if (fs.existsSync(path.join(projectRoot, "package-lock.json"))) return "npm";
+  return "";
 }
 
 function seedIdentity(owlDir: string, projectRoot: string): void {

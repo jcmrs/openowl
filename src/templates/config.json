@@ -7,6 +7,7 @@
       "rescan_interval_hours": 6,
       "max_description_length": 100,
       "max_files": 500,
+      "llm_descriptions": "auto",
       "exclude_patterns": [
         "node_modules",
         ".git",
@@ -60,6 +61,15 @@
     "dashboard": {
       "enabled": true,
       "port": 18791
+    },
+    "injection": {
+      "enabled": true,
+      "max_tokens": 2500,
+      "include_project": true,
+      "include_dnr": true,
+      "include_conventions": true,
+      "include_anatomy": true,
+      "include_bugs": true
     },
     "designqc": {
       "enabled": true,

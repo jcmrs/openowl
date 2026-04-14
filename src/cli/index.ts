@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { initCommand } from "./init.js";
 import { statusCommand } from "./status.js";
+import { doctorCommand } from "./doctor.js";
 import { scanCommand } from "./scan.js";
 import { dashboardCommand } from "./dashboard.js";
 
@@ -37,6 +38,11 @@ export function createProgram(): Command {
     .command("status")
     .description("Show plugin status, last session stats, file integrity")
     .action(statusCommand);
+
+  program
+    .command("doctor")
+    .description("Health check: verify plugin install, config, data freshness")
+    .action(doctorCommand);
 
   program
     .command("scan")

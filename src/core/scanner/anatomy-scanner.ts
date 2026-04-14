@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { extractDescription, capDescription } from "./description-extractor.js";
+import { generateDescriptions, generateDirectorySummary, type DescriptionResult } from "./description-generator.js";
 import { readJSON } from "../utils/fs-safe.js";
 import { writeText } from "../utils/fs-safe.js";
 import { normalizePath } from "../utils/paths.js";
@@ -9,6 +10,12 @@ interface AnatomyEntry {
   file: string;
   description: string;
   tokens: number;
+  method?: "llm" | "heuristic";
+}
+
+interface AnatomyDirectoryMeta {
+  summary: string;
+  method: "llm" | "heuristic";
 }
 
 interface OwlConfig {
@@ -18,6 +25,7 @@ interface OwlConfig {
       max_description_length: number;
       max_files: number;
       exclude_patterns: string[];
+      llm_descriptions?: "auto" | "on" | "off";
     };
     token_audit: {
       chars_per_token_code: number;
@@ -79,12 +87,20 @@ function shouldExclude(
   return false;
 }
 
+interface FileContext {
+  filePath: string;
+  content: string;
+  relativePath: string;
+  sectionKey: string;
+}
+
 function walkDir(
   dir: string,
   rootDir: string,
   excludePatterns: string[],
   maxFiles: number,
-  entries: Map<string, AnatomyEntry[]>
+  entries: Map<string, AnatomyEntry[]>,
+  fileContexts?: FileContext[]
 ): void {
   let totalFiles = 0;
   for (const [, list] of entries) totalFiles += list.length;
@@ -106,7 +122,7 @@ function walkDir(
     if (shouldExclude(relPath, excludePatterns)) continue;
 
     if (item.isDirectory()) {
-      walkDir(fullPath, rootDir, excludePatterns, maxFiles, entries);
+      walkDir(fullPath, rootDir, excludePatterns, maxFiles, entries, fileContexts);
     } else if (item.isFile()) {
       const ext = path.extname(item.name).toLowerCase();
       if (BINARY_EXTENSIONS.has(ext)) continue;
@@ -138,7 +154,12 @@ function walkDir(
         file: item.name,
         description: desc,
         tokens,
+        method: "heuristic",
       });
+
+      if (fileContexts) {
+        fileContexts.push({ filePath: fullPath, content, relativePath: relPath, sectionKey });
+      }
 
       totalFiles++;
       if (totalFiles >= maxFiles) return;
@@ -148,7 +169,8 @@ function walkDir(
 
 export function serializeAnatomy(
   sections: Map<string, AnatomyEntry[]>,
-  metadata: { lastScanned: string; fileCount: number; hits: number; misses: number }
+  metadata: { lastScanned: string; fileCount: number; hits: number; misses: number },
+  dirSummaries?: Map<string, AnatomyDirectoryMeta>
 ): string {
   const lines: string[] = [
     "# anatomy.md",
@@ -163,6 +185,13 @@ export function serializeAnatomy(
   for (const key of sortedKeys) {
     lines.push(`## ${key}`);
     lines.push("");
+
+    const dirMeta = dirSummaries?.get(key);
+    if (dirMeta?.summary) {
+      lines.push(dirMeta.summary);
+      lines.push("");
+    }
+
     const entries = sections.get(key)!;
     entries.sort((a, b) => a.file.localeCompare(b.file));
     for (const entry of entries) {
@@ -213,31 +242,80 @@ export function buildAnatomy(owlDir: string, projectRoot: string): { content: st
         max_description_length: 100,
         max_files: 500,
         exclude_patterns: ["node_modules", ".git", "dist", "build", ".owl"],
+        llm_descriptions: "auto",
       },
       token_audit: { chars_per_token_code: 3.0, chars_per_token_prose: 3.8 },
     },
   });
 
+  const llmMode = config.openowl.anatomy.llm_descriptions ?? "auto";
+  const useLLM = llmMode === "on" || (llmMode === "auto" && hasOpenCodeCLI());
+
   const entries = new Map<string, AnatomyEntry[]>();
+  const fileContexts: FileContext[] = [];
   walkDir(
     projectRoot,
     projectRoot,
     config.openowl.anatomy.exclude_patterns,
     config.openowl.anatomy.max_files,
-    entries
+    entries,
+    useLLM ? fileContexts : undefined
   );
 
   let fileCount = 0;
   for (const [, list] of entries) fileCount += list.length;
+
+  const dirSummaries = new Map<string, AnatomyDirectoryMeta>();
+
+  if (useLLM && fileContexts.length > 0) {
+    const descResults = generateDescriptions(fileContexts, projectRoot);
+    const descMap = new Map<string, DescriptionResult>();
+    for (const r of descResults) {
+      descMap.set(r.file, r);
+    }
+
+    for (const [sectionKey, sectionEntries] of entries) {
+      for (const item of sectionEntries) {
+        const fullRel = sectionKey === "./" ? item.file : sectionKey + item.file;
+        const result = descMap.get(fullRel) || descMap.get(item.file);
+        if (result?.success) {
+          item.description = capDescription(result.description);
+          item.method = "llm";
+        }
+      }
+    }
+
+    for (const [sectionKey, sectionEntries] of entries) {
+      const sectionFiles = fileContexts.filter((f) => f.sectionKey === sectionKey);
+      if (sectionFiles.length > 2) {
+        const summary = generateDirectorySummary(sectionKey, sectionFiles, projectRoot);
+        if (summary.description) {
+          dirSummaries.set(sectionKey, {
+            summary: summary.description,
+            method: summary.method,
+          });
+        }
+      }
+    }
+  }
 
   const serialized = serializeAnatomy(entries, {
     lastScanned: new Date().toISOString(),
     fileCount,
     hits: 0,
     misses: 0,
-  });
+  }, dirSummaries);
 
   return { content: serialized, fileCount };
+}
+
+function hasOpenCodeCLI(): boolean {
+  try {
+    require("node:child_process").execSync("opencode --version", { stdio: "ignore", timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function scanProject(owlDir: string, projectRoot: string): number {
