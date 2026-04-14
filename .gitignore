@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.owl/
+.opencode/
+UPSTREAM/
+*.tsbuildinfo
+.env
+.env.*
