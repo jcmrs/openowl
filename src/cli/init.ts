@@ -126,11 +126,27 @@ export async function initCommand(): Promise<void> {
   const snippetContent = generateAgentsMdSnippet();
   if (fs.existsSync(agentsMdPath)) {
     const existing = readText(agentsMdPath);
-    const nonOwl = existing.replace(/# OpenOwl[\s\S]*?(?=\n# [A-Z]|\n## [A-Z]|\n---|$)/g, "").trim();
-    if (nonOwl.length > 0) {
-      writeText(agentsMdPath, snippetContent + "\n\n" + nonOwl + "\n");
-    } else {
+    const lines = existing.split("\n");
+    const owlStartIdx = lines.findIndex((l) => l === "# OpenOwl");
+
+    if (owlStartIdx === -1) {
       writeText(agentsMdPath, snippetContent + "\n");
+    } else {
+      let owlEndIdx = lines.length;
+      for (let i = owlStartIdx + 1; i < lines.length; i++) {
+        if (/^# [A-Z]/.test(lines[i]) && !lines[i].startsWith("## ")) {
+          owlEndIdx = i;
+          break;
+        }
+      }
+      const before = lines.slice(0, owlStartIdx);
+      const after = lines.slice(owlEndIdx);
+      const nonOwl = [...before, ...after].join("\n").trim();
+      if (nonOwl.length > 0) {
+        writeText(agentsMdPath, snippetContent + "\n\n" + nonOwl + "\n");
+      } else {
+        writeText(agentsMdPath, snippetContent + "\n");
+      }
     }
   } else {
     writeText(agentsMdPath, snippetContent + "\n");

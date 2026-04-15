@@ -50,6 +50,70 @@ describe("init helpers", () => {
     expect(content).toContain("concise description");
   });
 
+  it("re-init does not duplicate AGENTS.md content", async () => {
+    fs.writeFileSync(path.join(tmpDir, "package.json"), JSON.stringify({
+      name: "test-init-project",
+      dependencies: {},
+    }));
+    fs.mkdirSync(path.join(tmpDir, ".git"), { recursive: true });
+
+    const origCwd = process.cwd();
+    process.chdir(tmpDir);
+
+    try {
+      const { initCommand } = await import("../cli/init.js");
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await initCommand();
+      const firstContent = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf-8");
+      const firstLines = firstContent.split("\n").filter((l) => l.includes("OpenOwl"));
+
+      await initCommand();
+      const secondContent = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf-8");
+      const secondLines = secondContent.split("\n").filter((l) => l.includes("OpenOwl"));
+
+      expect(secondLines.length).toBe(firstLines.length);
+
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    } finally {
+      process.chdir(origCwd);
+    }
+  }, 15000);
+
+  it("re-init preserves non-OpenOwl AGENTS.md content", async () => {
+    fs.writeFileSync(path.join(tmpDir, "package.json"), JSON.stringify({
+      name: "test-init-project",
+      dependencies: {},
+    }));
+    fs.mkdirSync(path.join(tmpDir, ".git"), { recursive: true });
+
+    const origCwd = process.cwd();
+    process.chdir(tmpDir);
+
+    try {
+      const { initCommand } = await import("../cli/init.js");
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await initCommand();
+      fs.appendFileSync(path.join(tmpDir, "AGENTS.md"), "\n# Custom Section\n\nCustom content here.\n");
+
+      await initCommand();
+      const content = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf-8");
+      expect(content).toContain("# Custom Section");
+      expect(content).toContain("Custom content here.");
+      const openOwlCount = (content.match(/^# OpenOwl$/gm) || []).length;
+      expect(openOwlCount).toBe(1);
+
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    } finally {
+      process.chdir(origCwd);
+    }
+  }, 15000);
+
   it("initCommand creates .owl directory and cerebrum.md with detected framework", async () => {
     fs.writeFileSync(path.join(tmpDir, "package.json"), JSON.stringify({
       name: "test-init-project",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3 (2026-04-15)
+
+### Bug Fixes
+- Fix AGENTS.md duplication: rewritten section boundary detection to use line-by-line parsing instead of regex. The previous regex only matched the `# OpenOwl` header line, leaving duplicated `## ` sub-sections intact on each re-init. Now correctly finds the full OpenOwl section (from `# OpenOwl` to the next top-level heading or EOF) and replaces it entirely.
+
 ## 0.4.2 (2026-04-15)
 
 ### Bug Fixes
