@@ -35,6 +35,7 @@ This creates `.owl/` with configuration, installs `opencode-owl` as a project de
 | `openowl scan` | Rescan project anatomy |
 | `openowl daemon start` | Start the background daemon (requires pm2) |
 | `openowl daemon stop` | Stop the daemon |
+| `openowl daemon status` | Show daemon status |
 | `openowl daemon restart` | Restart the daemon |
 | `openowl daemon logs` | Show daemon log output |
 | `openowl dashboard` | Launch the web dashboard |
@@ -99,6 +100,7 @@ The `injection` section controls what gets injected into the system prompt each 
 
 - Node.js 20+
 - OpenCode >= 1.4.1
+- pm2 (`npm install -g pm2`) — required for daemon commands (`openowl daemon start/stop/status`)
 
 ## License
 

@@ -181,3 +181,19 @@ export function daemonLogs(): void {
     console.error("Failed to get daemon logs.");
   }
 }
+
+export function daemonStatus(): void {
+  if (!hasPm2()) {
+    console.log("pm2 not found. Install with: npm install -g pm2");
+    return;
+  }
+
+  const name = getPm2Name();
+  try {
+    const output = execSync(`pm2 show "${name}"`, { encoding: "utf-8" });
+    console.log(output);
+  } catch {
+    console.log(`  Daemon '${name}' is not running.`);
+    console.log("  Start it with: openowl daemon start");
+  }
+}

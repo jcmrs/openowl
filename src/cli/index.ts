@@ -60,6 +60,14 @@ export function createProgram(): Command {
     .description("Daemon management");
 
   daemon
+    .command("status")
+    .description("Show daemon status (requires pm2)")
+    .action(async () => {
+      const { daemonStatus } = await import("./daemon-cmd.js");
+      daemonStatus();
+    });
+
+  daemon
     .command("start")
     .description("Start daemon via pm2")
     .action(async () => {
