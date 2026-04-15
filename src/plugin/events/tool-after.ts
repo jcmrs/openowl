@@ -4,6 +4,7 @@ import { logToMemory } from "../context/memory-logger.js";
 import { estimateTokens } from "../context/token-tracker.js";
 import { detectBugFix, autoLogBug } from "../context/bug-detector.js";
 import { readSession, writeSession, resolveReadByCallID } from "../context/session-manager.js";
+import { appendCerebrumEntry } from "../context/cerebrum-logger.js";
 
 interface ToolAfterInput {
   tool: string;
@@ -60,6 +61,7 @@ export async function handleToolAfter(
     const editCount = session.edits_by_file[filePath] ?? 0;
     if (editCount >= 3) {
       warnings.push(`MULTI-EDIT: ${filePath} has been edited ${editCount} times this session — this may indicate a bug`);
+      appendCerebrumEntry(owlDir, "key-learnings", "auto", `${filePath} edited ${editCount} times this session — possible instability`);
     }
 
     const oldContent = input.args?.oldString ?? "";

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.4 (2026-04-15)
+
+### Features
+- Auto-logging to cerebrum.md — insights now flow back mechanically without relying on model compliance:
+  - Bug detection auto-logs to Key Learnings section
+  - DNR violation attempts auto-log to Do-Not-Repeat section
+  - Multi-edit detection (3+ edits to same file) auto-logs to Key Learnings
+  - Session end with writes auto-logs a file summary to Key Learnings
+- New `cerebrum-logger.ts` utility with `appendCerebrumEntry(owlDir, section, scope, text)`
+
 ## 0.4.3 (2026-04-15)
 
 ### Bug Fixes

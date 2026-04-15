@@ -4,6 +4,7 @@ import { checkBuglog } from "../context/buglog-guard.js";
 import { extractDoNotRepeatPatterns, checkDoNotRepeat } from "../context/cerebrum-guard.js";
 import { initSession, readSession, recordRead, recordWrite, writeSession } from "../context/session-manager.js";
 import { estimateTokens } from "../context/token-tracker.js";
+import { appendCerebrumEntry } from "../context/cerebrum-logger.js";
 
 interface ToolBeforeInput {
   tool: string;
@@ -64,6 +65,7 @@ export async function handleToolBefore(
       const match = checkDoNotRepeat(content, dnrPatterns, filePath);
       if (match) {
         warnings.push(`CEREBRUM DNR: This change may repeat a known mistake: "${match.line}"`);
+        appendCerebrumEntry(owlDir, "do-not-repeat", "auto", `DNR violation attempt in ${filePath}: "${match.line.slice(0, 80)}"`);
       }
     }
 

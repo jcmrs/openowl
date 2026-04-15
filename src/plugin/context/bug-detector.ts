@@ -1,4 +1,5 @@
 import { logBug } from "../../core/buglog/bug-tracker.js";
+import { appendCerebrumEntry } from "./cerebrum-logger.js";
 
 const COMMENT_OR_STRING_RE = /\/\/[^\n]*$|\/\*[\s\S]*?\*\/|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`/gm;
 
@@ -132,4 +133,6 @@ export function autoLogBug(
     fix: "unknown",
     tags: result.tags,
   });
+
+  appendCerebrumEntry(owlDir, "key-learnings", "auto", `Bug pattern detected in ${filePath}: ${result.category}. Logged to buglog.`);
 }

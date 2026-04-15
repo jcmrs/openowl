@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import { readJSON, writeJSON, readText, appendText } from "../../core/utils/fs-safe.js";
 import { addSessionToLedger, incrementSessions } from "../../core/tracker/token-ledger.js";
 import type { SessionEntry } from "../../core/tracker/token-ledger.js";
+import { appendCerebrumEntry } from "./cerebrum-logger.js";
 
 export interface SessionState {
   session_id: string;
@@ -195,4 +196,15 @@ export function finalizeSession(owlDir: string): void {
     path.join(owlDir, "memory.md"),
     `\n| --:-- | Session ended | — | ${state.reads.length} reads, ${state.writes.length} writes | ~${state.total_read_tokens + state.total_write_tokens} tokens |\n`
   );
+
+  if (state.writes.length > 0) {
+    const files = state.writes.map((w) => path.basename(w.file_path));
+    const unique = [...new Set(files)];
+    appendCerebrumEntry(
+      owlDir,
+      "key-learnings",
+      "session",
+      `Session modified ${unique.length} file(s): ${unique.join(", ")} (${state.reads.length} reads, ${state.total_read_tokens + state.total_write_tokens} tokens)`
+    );
+  }
 }
