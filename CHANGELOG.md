@@ -39,22 +39,22 @@ Comprehensive audit remediation — 208 findings across 5 audits (E2E, SILENT, P
 - 166 tests across 30 files (up from 163)
 - New tests for BOM/CRLF normalization, sanitizeConfig null guard, autoLogBug fix field, null buglog fields, buglog integration in tool-before, session init verification, corrupted session handling
 
-## 0.3.3 (2026-04-14)
+## 0.3.3 (2026-04-15)
 
 ### Bug Fixes
 - Show full relative paths in anatomy.md file entries instead of bare filenames
 
-## 0.3.2 (2026-04-14)
+## 0.3.2 (2026-04-15)
 
 ### Bug Fixes
 - `openowl init` now always replaces the OpenOwl section in AGENTS.md, even if "OpenOwl" text already exists
 
-## 0.3.1 (2026-04-14)
+## 0.3.1 (2026-04-15)
 
 ### Changes
 - Removed debug logging, clean release
 
-## 0.3.0 (2026-04-14)
+## 0.3.0 (2026-04-15)
 
 ### Features
 - Added `openowl daemon status` subcommand
@@ -63,24 +63,24 @@ Comprehensive audit remediation — 208 findings across 5 audits (E2E, SILENT, P
 ### Documentation
 - Documented pm2 as a required dependency for daemon features
 
-## 0.2.3 (2026-04-14)
+## 0.2.3 (2026-04-15)
 
 ### Bug Fixes
 - Moved DNR section to end of cerebrum.md template so `echo >>` appends land in correct section
 - Added file-based debug logging
 
-## 0.2.2 (2026-04-14)
+## 0.2.2 (2026-04-15)
 
 ### Bug Fixes
 - Added diagnostic logging for DNR warning pass-through debugging
 
-## 0.2.1 (2026-04-14)
+## 0.2.1 (2026-04-15)
 
 ### Bug Fixes
 - DNR checker now checks both file content and filename
 - Cerebrum entry parser now handles indented entries (`^\s*-` pattern)
 
-## 0.2.0 (2026-04-14)
+## 0.2.0 (2026-04-15)
 
 ### Bug Fixes
 - Fixed critical tool parameter tracking — OpenCode uses camelCase (`filePath`) not snake_case

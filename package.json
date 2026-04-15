@@ -70,7 +70,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jcmrs/openowl"
+    "url": "git+https://github.com/jcmrs/openowl.git"
   },
   "keywords": [
     "opencode",

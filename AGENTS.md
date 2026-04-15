@@ -52,3 +52,14 @@ OpenOwl is a TypeScript middleware providing project intelligence, token trackin
 - Token estimation: configurable ratios in config.json (defaults: code 3.0, prose 3.8, mixed 3.4)
 - All Claude references replaced with OpenCode equivalents
 - OpenCode plugin events are observational (cannot block tool execution)
+
+## Known Limitations (deferred from audit)
+
+- **E2E-26: Plugin load failures are invisible to the model.** OpenCode does not expose plugin apply errors to the LLM. The model sees no output if the plugin fails to load. This is an OpenCode platform limitation, not fixable from the plugin side.
+- **E2E-28: `client.app.log()` is invisible to the model.** Writes to server-side structured logging only, never shown to the LLM. Workaround: all model-visible warnings are routed through `tool.execute.after` output mutation instead.
+- **GAP-02: Anatomy does not track file deletions.** `updateAnatomyAfterWrite` only handles creates/updates. No delete handler exists. When files are deleted, stale entries remain in anatomy.md until the next full `openowl scan`.
+- **GAP-05: Relevance selection sorts by size, not context.** `selectRelevantEntries` in `relevance.ts` sorts file entries by token count (largest first), not by contextual relevance to the current task. This is working as designed — true contextual ranking would require LLM involvement.
+
+## Open Challenges
+
+- **Dashboard (`src/dashboard/`)**: The React dashboard compiles and ships but has not been audited or polished. It provides read-only views of anatomy, cerebrum, buglog, memory, and token usage. Status: functional but not validated against real `.owl/` data. Needs a dedicated audit pass.
