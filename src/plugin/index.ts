@@ -99,6 +99,7 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
         console.error("[OpenOwl] Error in tool.execute.before:", err);
       }
       if (warnings.length > 0) {
+        console.error(`[OpenOwl] tool.before warnings for ${input.callID}:`, warnings);
         pendingWarnings.set(input.callID, warnings);
       }
       await logWarnings(warnings);
@@ -120,10 +121,13 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
         console.error("[OpenOwl] Error in tool.execute.after:", err);
       }
 
-      if (warnings.length > 0 && typeof output.output === "string") {
-        const prefix = "\n\n[OpenOwl] ";
-        const warningText = warnings.map((w) => `${prefix}${w}`).join("\n");
-        output.output = output.output + warningText;
+      if (warnings.length > 0) {
+        console.error(`[OpenOwl] tool.after ${warnings.length} warnings, output.output type: ${typeof output.output}, has output: ${!!output.output}`);
+        if (typeof output.output === "string") {
+          const prefix = "\n\n[OpenOwl] ";
+          const warningText = warnings.map((w) => `${prefix}${w}`).join("\n");
+          output.output = output.output + warningText;
+        }
       }
 
       await logWarnings(warnings);
