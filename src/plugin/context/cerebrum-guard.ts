@@ -21,8 +21,8 @@ export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
       if (line.startsWith("## ") && inDNR) {
         break;
       }
-      if (inDNR && line.startsWith("- ") && line.length > 4) {
-        const text = line.slice(2).trim();
+      if (inDNR && line.match(/^\s*-\s/) && line.length > 4) {
+        const text = line.replace(/^\s*-\s+/, "").trim();
         entries.push({
           line: text,
           pattern: text.toLowerCase().replace(/\d+/g, "N").replace(/[^\w\s]/g, " ").trim(),
@@ -33,10 +33,11 @@ export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
   return entries;
 }
 
-export function checkDoNotRepeat(content: string, patterns: DoNotRepeatEntry[]): DoNotRepeatEntry | null {
+export function checkDoNotRepeat(content: string, patterns: DoNotRepeatEntry[], filePath?: string): DoNotRepeatEntry | null {
   if (patterns.length === 0) return null;
 
-  const normalized = content.toLowerCase().replace(/\d+/g, "N").replace(/[^\w\s]/g, " ").trim();
+  const combined = filePath ? `${filePath} ${content}` : content;
+  const normalized = combined.toLowerCase().replace(/\d+/g, "N").replace(/[^\w\s]/g, " ").trim();
   const contentTokens = new Set(normalized.split(/\s+/).filter((w) => w.length > 2));
 
   for (const entry of patterns) {

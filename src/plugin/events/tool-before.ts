@@ -52,7 +52,7 @@ export async function handleToolBefore(
 
     const dnrPatterns = extractDoNotRepeatPatterns(owlDir);
     if (dnrPatterns.length > 0) {
-      const match = checkDoNotRepeat(content, dnrPatterns);
+      const match = checkDoNotRepeat(content, dnrPatterns, filePath);
       if (match) {
         warnings.push(`CEREBRUM DNR: This change may repeat a known mistake: "${match.line}"`);
       }
