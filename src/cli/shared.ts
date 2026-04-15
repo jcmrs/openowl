@@ -5,16 +5,6 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export function getVersion(): string {
-  try {
-    const pkgPath = path.resolve(__dirname, "../../package.json");
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-    return pkg.version || "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
 export function findTemplatesDir(): string {
   const candidates = [
     path.resolve(__dirname, "..", "templates"),

@@ -14,7 +14,7 @@ export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
     let inDNR = false;
 
     for (const line of lines) {
-      if (line.trim() === "## Do-Not-Repeat") {
+      if (line.trim().toLowerCase() === "## do-not-repeat") {
         inDNR = true;
         continue;
       }

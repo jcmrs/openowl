@@ -1,6 +1,6 @@
 import type { InjectionConfig } from "./build-context.js";
 
-export interface InjectionState {
+interface InjectionState {
   lastBuilt: string;
   lastModified: number;
   error: string | null;
@@ -8,16 +8,15 @@ export interface InjectionState {
 
 export function validateInjectionConfig(config: Record<string, unknown>): { config: InjectionConfig; warnings: string[] } {
   const warnings: string[] = [];
-  const injection = (config.injection ?? {}) as Record<string, unknown>;
 
   const result: InjectionConfig = {
-    enabled: typeof injection.enabled === "boolean" ? injection.enabled : true,
-    max_tokens: typeof injection.max_tokens === "number" ? injection.max_tokens : 2500,
-    include_project: typeof injection.include_project === "boolean" ? injection.include_project : true,
-    include_dnr: typeof injection.include_dnr === "boolean" ? injection.include_dnr : true,
-    include_conventions: typeof injection.include_conventions === "boolean" ? injection.include_conventions : true,
-    include_anatomy: typeof injection.include_anatomy === "boolean" ? injection.include_anatomy : true,
-    include_bugs: typeof injection.include_bugs === "boolean" ? injection.include_bugs : true,
+    enabled: typeof config.enabled === "boolean" ? config.enabled : true,
+    max_tokens: typeof config.max_tokens === "number" ? config.max_tokens : 2500,
+    include_project: typeof config.include_project === "boolean" ? config.include_project : true,
+    include_dnr: typeof config.include_dnr === "boolean" ? config.include_dnr : true,
+    include_conventions: typeof config.include_conventions === "boolean" ? config.include_conventions : true,
+    include_anatomy: typeof config.include_anatomy === "boolean" ? config.include_anatomy : true,
+    include_bugs: typeof config.include_bugs === "boolean" ? config.include_bugs : true,
   };
 
   if (result.max_tokens < 500) {

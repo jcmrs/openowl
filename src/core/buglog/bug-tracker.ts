@@ -21,7 +21,7 @@ interface BugLog {
   bugs: BugEntry[];
 }
 
-export function getBugLogPath(owlDir: string): string {
+function getBugLogPath(owlDir: string): string {
   return path.join(owlDir, "buglog.json");
 }
 

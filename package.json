@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "bin": {
@@ -24,24 +28,23 @@
     "build": "tsc && npm run build:dashboard",
     "build:cli": "tsc",
     "build:dashboard": "cd src/dashboard/app && npx vite build",
+    "prepack": "rm -rf dist && npm run build",
     "dev": "tsc --watch",
-    "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.0.0",
+    "opencode": ">=1.4.1"
   },
   "dependencies": {
+    "commander": "^12.0.0"
+  },
+  "optionalDependencies": {
     "chokidar": "^5.0.0",
-    "commander": "^12.0.0",
     "express": "^5.2.1",
     "node-cron": "^4.2.1",
-    "puppeteer-core": "^24.40.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "recharts": "^3.8.1",
     "ws": "^8.20.0"
   },
   "devDependencies": {
@@ -55,6 +58,9 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "recharts": "^3.8.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^8.0.8",
@@ -63,7 +69,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anomalyco/openowl"
+    "url": "https://github.com/jcmrs/openowl"
   },
   "keywords": [
     "opencode",

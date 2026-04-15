@@ -56,7 +56,7 @@ export interface TokenLedger {
   };
 }
 
-export function getLedgerPath(owlDir: string): string {
+function getLedgerPath(owlDir: string): string {
   return path.join(owlDir, "token-ledger.json");
 }
 
@@ -81,7 +81,7 @@ export function readLedger(owlDir: string): TokenLedger {
   });
 }
 
-export function writeLedger(owlDir: string, ledger: TokenLedger): void {
+function writeLedger(owlDir: string, ledger: TokenLedger): void {
   writeJSON(getLedgerPath(owlDir), ledger);
 }
 

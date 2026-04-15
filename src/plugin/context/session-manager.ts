@@ -65,7 +65,11 @@ export function initSession(owlDir: string, sessionId: string): SessionState {
   };
 
   writeJSON(getSessionPath(owlDir), state);
-  incrementSessions(owlDir);
+  try {
+    incrementSessions(owlDir);
+  } catch {
+    console.error("[OpenOwl] Failed to increment session count in ledger");
+  }
 
   const now = new Date();
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -123,14 +127,6 @@ export function recordWrite(
   state.edits_by_file[filePath] = (state.edits_by_file[filePath] ?? 0) + 1;
 }
 
-export function recordBugFix(state: SessionState, bugId: string): void {
-  state.buglog_entries.push(bugId);
-}
-
-export function markCerebrumUpdated(state: SessionState): void {
-  state.cerebrum_updated = true;
-}
-
 export function resolveReadByCallID(
   state: SessionState,
   callID: string,
@@ -140,14 +136,14 @@ export function resolveReadByCallID(
   const idx = state.pending_read_call_ids?.[callID];
   if (idx !== undefined && state.reads[idx]) {
     state.reads[idx].actual_tokens = actualTokens;
-    state.total_read_tokens += actualTokens - state.reads[idx].estimated_tokens;
+    state.total_read_tokens += Math.max(0, actualTokens - state.reads[idx].estimated_tokens);
     delete state.pending_read_call_ids![callID];
   } else {
     const normalized = filePath.replace(/\\/g, "/");
     const lastIdx = state.reads.length - 1;
     if (lastIdx >= 0 && state.reads[lastIdx].file_path.replace(/\\/g, "/") === normalized) {
       state.reads[lastIdx].actual_tokens = actualTokens;
-      state.total_read_tokens += actualTokens - state.reads[lastIdx].estimated_tokens;
+      state.total_read_tokens += Math.max(0, actualTokens - state.reads[lastIdx].estimated_tokens);
     }
   }
 }
@@ -186,7 +182,9 @@ export function finalizeSession(owlDir: string): void {
 
   try {
     fs.unlinkSync(sessionPath);
-  } catch {}
+  } catch (err) {
+    console.error("[OpenOwl] Failed to clean up session file:", err);
+  }
 
   appendText(
     path.join(owlDir, "memory.md"),

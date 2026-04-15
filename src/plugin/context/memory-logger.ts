@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import * as fs from "node:fs";
 import { appendText, readText, writeText } from "../../core/utils/fs-safe.js";
 
 const MAX_MEMORY_LINES = 200;
@@ -22,9 +21,16 @@ export function logToMemory(
 
   const lines = content.split("\n");
   if (lines.length > MAX_MEMORY_LINES) {
-    const headerEnd = lines.findIndex((l) => l.startsWith("> Chronological")) + 1;
-    const trimmed = lines.slice(headerEnd, lines.length - (MAX_MEMORY_LINES - headerEnd));
-    content = lines.slice(0, headerEnd).join("\n") + "\n> ... " + trimmed.length + " older entries consolidated ...\n\n" + lines.slice(lines.length - (MAX_MEMORY_LINES - headerEnd)).join("\n");
+    const markerIdx = lines.findIndex((l) => l.startsWith("> Chronological"));
+    const headerEnd = markerIdx >= 0 ? markerIdx + 1 : 0;
+
+    if (headerEnd === 0) {
+      const excess = lines.length - MAX_MEMORY_LINES;
+      content = lines.slice(excess).join("\n");
+    } else {
+      const trimmed = lines.slice(headerEnd, lines.length - (MAX_MEMORY_LINES - headerEnd));
+      content = lines.slice(0, headerEnd).join("\n") + "\n> ... " + trimmed.length + " older entries consolidated ...\n\n" + lines.slice(lines.length - (MAX_MEMORY_LINES - headerEnd)).join("\n");
+    }
   }
 
   writeText(memoryPath, content);

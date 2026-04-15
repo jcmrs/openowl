@@ -98,6 +98,30 @@ export async function initCommand(): Promise<void> {
     createdCount++;
   }
 
+  const pkgPath = path.join(projectRoot, "package.json");
+  let depInstalled = false;
+  if (fs.existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+      const deps = pkg.dependencies ?? {};
+      if (!deps.openowl) {
+        const pm = detectPackageManager(projectRoot);
+        const installCmd = pm === "pnpm" ? "pnpm add" : pm === "yarn" ? "yarn add" : pm === "bun" ? "bun add" : "npm install";
+        console.log(`  Installing openowl as a dependency (${installCmd} openowl)...`);
+        const { execSync } = require("node:child_process");
+        execSync(`${installCmd} openowl`, { cwd: projectRoot, stdio: "inherit", timeout: 60000 });
+        depInstalled = true;
+      } else {
+        depInstalled = true;
+      }
+    } catch (err) {
+      console.error(`  Warning: Failed to install openowl as a dependency: ${(err as Error).message}`);
+      console.error(`  The plugin requires openowl to be installed. Run: npm install openowl`);
+    }
+  } else {
+    console.error(`  Warning: No package.json found. The plugin requires openowl to be installed manually.`);
+  }
+
   const agentsMdPath = path.join(projectRoot, "AGENTS.md");
   const snippetContent = generateAgentsMdSnippet();
   if (fs.existsSync(agentsMdPath)) {
