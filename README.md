@@ -19,11 +19,11 @@ Adapted from [OpenWolf](https://github.com/cytostack/openwolf) with all Claude-s
 ## Install
 
 ```bash
-npm install openowl
+npm install opencode-owl
 npx openowl init
 ```
 
-This creates `.owl/` with configuration, installs `openowl` as a project dependency, installs the OpenCode plugin, and updates `AGENTS.md`.
+This creates `.owl/` with configuration, installs `opencode-owl` as a project dependency, installs the OpenCode plugin, and updates `AGENTS.md`.
 
 ## CLI Commands
 

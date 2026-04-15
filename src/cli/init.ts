@@ -104,22 +104,22 @@ export async function initCommand(): Promise<void> {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
       const deps = pkg.dependencies ?? {};
-      if (!deps.openowl) {
+      if (!deps["opencode-owl"]) {
         const pm = detectPackageManager(projectRoot);
         const installCmd = pm === "pnpm" ? "pnpm add" : pm === "yarn" ? "yarn add" : pm === "bun" ? "bun add" : "npm install";
-        console.log(`  Installing openowl as a dependency (${installCmd} openowl)...`);
+        console.log(`  Installing opencode-owl as a dependency (${installCmd} opencode-owl)...`);
         const { execSync } = require("node:child_process");
-        execSync(`${installCmd} openowl`, { cwd: projectRoot, stdio: "inherit", timeout: 60000 });
+        execSync(`${installCmd} opencode-owl`, { cwd: projectRoot, stdio: "inherit", timeout: 60000 });
         depInstalled = true;
       } else {
         depInstalled = true;
       }
     } catch (err) {
-      console.error(`  Warning: Failed to install openowl as a dependency: ${(err as Error).message}`);
-      console.error(`  The plugin requires openowl to be installed. Run: npm install openowl`);
+      console.error(`  Warning: Failed to install opencode-owl as a dependency: ${(err as Error).message}`);
+      console.error(`  The plugin requires opencode-owl to be installed. Run: npm install opencode-owl`);
     }
   } else {
-    console.error(`  Warning: No package.json found. The plugin requires openowl to be installed manually.`);
+    console.error(`  Warning: No package.json found. The plugin requires opencode-owl to be installed manually.`);
   }
 
   const agentsMdPath = path.join(projectRoot, "AGENTS.md");
@@ -151,7 +151,7 @@ export async function initCommand(): Promise<void> {
 
   try {
     const projectName = detectProjectName(projectRoot);
-    if (projectName !== "openowl") {
+    if (projectName !== "opencode-owl") {
       registerProject(projectRoot, projectName, "unknown");
     }
   } catch {}

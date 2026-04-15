@@ -89,8 +89,8 @@ async function updateProject(
     return { project, status: "skipped", message: ".owl/ directory not found" };
   }
 
-  if (name === "openowl") {
-    return { project, status: "skipped", message: "openowl source repo - skipped" };
+  if (name === "opencode-owl") {
+    return { project, status: "skipped", message: "opencode-owl source repo - skipped" };
   }
 
   console.log(`  ${name} (${root})`);

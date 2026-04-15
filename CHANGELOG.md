@@ -23,7 +23,7 @@ Initial release of OpenOwl, a project intelligence middleware for OpenCode.
 - Fixed cerebrum DNR heading case sensitivity
 - Fixed app.log SDK call signature
 - Plugin gracefully handles missing `.owl/` directory
-- `openowl init` now installs openowl as a project dependency
+- `openowl init` now installs opencode-owl as a project dependency
 
 ### Breaking Changes
 - None (initial release)

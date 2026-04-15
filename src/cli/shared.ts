@@ -19,7 +19,7 @@ export function findTemplatesDir(): string {
 
 export function generatePluginContent(): string {
   return `import type { Plugin } from "@opencode-ai/plugin";
-import { OpenOwlPlugin } from "openowl";
+import { OpenOwlPlugin } from "opencode-owl";
 
 const plugin: Plugin = async (ctx) => OpenOwlPlugin(ctx);
 export default plugin;

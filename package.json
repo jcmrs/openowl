@@ -1,5 +1,5 @@
 {
-  "name": "openowl",
+  "name": "opencode-owl",
   "version": "0.1.0",
   "description": "Project intelligence, token tracking, and learning memory middleware for OpenCode",
   "type": "module",

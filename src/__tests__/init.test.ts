@@ -38,7 +38,7 @@ describe("init helpers", () => {
   it("generatePluginContent contains import and default export structure", () => {
     const content = generatePluginContent();
     expect(content).toContain('import type { Plugin }');
-    expect(content).toContain('import { OpenOwlPlugin } from "openowl"');
+    expect(content).toContain('import { OpenOwlPlugin } from "opencode-owl"');
     expect(content).toContain("export default plugin");
     expect(content).toContain("async (ctx)");
   });
