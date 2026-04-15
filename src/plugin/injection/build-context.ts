@@ -238,14 +238,15 @@ function buildConventionsSection(owlDir: string): string {
     if (legacyEntries.length === 0) return "";
 
     let section = "## Key Conventions\n";
-    for (const entry of conventionEntries.slice(-8).reverse()) {
+    for (const entry of legacyEntries.slice(-8)) {
       section += `- ${entry}\n`;
     }
     return section;
   }
 
   let section = "## Key Conventions\n";
-  for (const entry of conventionEntries.slice(0, 8)) {
+  const recent = conventionEntries.slice(-8);
+  for (const entry of recent) {
     const prefix = entry.tag !== "general" ? `[${entry.tag}] ` : "";
     section += `- ${prefix}${entry.text}\n`;
   }
