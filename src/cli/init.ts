@@ -126,16 +126,14 @@ export async function initCommand(): Promise<void> {
   const snippetContent = generateAgentsMdSnippet();
   if (fs.existsSync(agentsMdPath)) {
     const existing = readText(agentsMdPath);
-    const owlSection = existing.match(/# OpenOwl[\s\S]*?(?=\n# [A-Z]|\n## [A-Z]|\n---)/);
-    const rest = owlSection ? existing.slice(owlSection.index! + owlSection[0]!.length) : existing;
-    const hasNonOwlContent = rest.trim().length > 0;
-    if (hasNonOwlContent) {
-      writeText(agentsMdPath, snippetContent + "\n\n" + rest);
+    const nonOwl = existing.replace(/# OpenOwl[\s\S]*?(?=\n# [A-Z]|\n## [A-Z]|\n---|$)/g, "").trim();
+    if (nonOwl.length > 0) {
+      writeText(agentsMdPath, snippetContent + "\n\n" + nonOwl + "\n");
     } else {
-      writeText(agentsMdPath, snippetContent);
+      writeText(agentsMdPath, snippetContent + "\n");
     }
   } else {
-    writeText(agentsMdPath, snippetContent);
+    writeText(agentsMdPath, snippetContent + "\n");
   }
 
   let fileCount = 0;

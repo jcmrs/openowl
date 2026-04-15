@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 (2026-04-15)
+
+### Bug Fixes
+- Fix AGENTS.md duplication on re-init: `openowl init` now strips ALL existing OpenOwl sections before inserting the fresh snippet, preventing accumulation of duplicate content on repeated runs
+
 ## 0.4.1 (2026-04-15)
 
 ### Features
