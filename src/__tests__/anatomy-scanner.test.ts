@@ -30,8 +30,8 @@ describe("serializeAnatomy with directory summaries", () => {
 
     expect(result).toContain("Main source directory");
     expect(result).toContain("Authentication and authorization module");
-    expect(result).toContain("`index.ts`");
-    expect(result).toContain("`login.ts`");
+    expect(result).toContain("`src/index.ts`");
+    expect(result).toContain("`src/auth/login.ts`");
   });
 
   it("omits empty directory summaries", () => {
@@ -72,7 +72,7 @@ describe("serializeAnatomy with directory summaries", () => {
       misses: 0,
     });
 
-    expect(result).toContain("`index.ts`");
+    expect(result).toContain("`src/index.ts`");
     expect(result).toContain("Entry point");
   });
 
@@ -112,8 +112,8 @@ describe("serializeAnatomy with directory summaries", () => {
       misses: 0,
     });
 
-    const appleIdx = result.indexOf("`apple.ts`");
-    const zebraIdx = result.indexOf("`zebra.ts`");
+    const appleIdx = result.indexOf("`src/apple.ts`");
+    const zebraIdx = result.indexOf("`src/zebra.ts`");
     expect(appleIdx).toBeLessThan(zebraIdx);
   });
 });

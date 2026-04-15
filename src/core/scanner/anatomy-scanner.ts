@@ -196,7 +196,8 @@ export function serializeAnatomy(
     entries.sort((a, b) => a.file.localeCompare(b.file));
     for (const entry of entries) {
       const desc = entry.description ? ` — ${entry.description}` : "";
-      lines.push(`- \`${entry.file}\`${desc} (~${entry.tokens} tok)`);
+      const displayPath = key === "./" ? entry.file : key + entry.file;
+      lines.push(`- \`${displayPath}\`${desc} (~${entry.tokens} tok)`);
     }
     lines.push("");
   }
@@ -222,8 +223,10 @@ export function parseAnatomy(content: string): Map<string, AnatomyEntry[]> {
 
     const entryMatch = line.match(/^- `([^`]+)`(?:\s+—\s+(.+?))?\s*\(~(\d+)\s+tok\)$/);
     if (entryMatch) {
+      const displayPath = entryMatch[1];
+      const fileName = path.basename(displayPath);
       sections.get(currentSection)!.push({
-        file: entryMatch[1],
+        file: fileName,
         description: entryMatch[2] || "",
         tokens: parseInt(entryMatch[3], 10),
       });
