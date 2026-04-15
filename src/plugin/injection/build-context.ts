@@ -87,6 +87,8 @@ export function buildInjectionContext(
   for (const s of sections) {
     block += s.content + "\n";
   }
+  block += "## Contributing\n";
+  block += "If you learned something this session worth remembering, append a tagged entry to .owl/cerebrum.md: `- [scope] YYYY-MM-DD: concise description`.\n";
   block += "</owl-context>";
 
   return trimToTokenBudget(block, cfg.max_tokens, tokenRatios);

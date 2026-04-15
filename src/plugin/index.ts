@@ -19,6 +19,8 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
 
   const pendingWarnings = new Map<string, string[]>();
 
+  let writeCount = 0;
+
   let injectionConfig: ReturnType<typeof validateInjectionConfig>["config"];
   let tokenRatios: { code: number; prose: number; mixed: number } | undefined;
   if (owlReady) {
@@ -147,6 +149,19 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
       }
 
       await logWarnings(warnings);
+
+      if (input.tool === "write" || input.tool === "edit") {
+        writeCount++;
+        if (writeCount % 10 === 0 && typeof output.output === "string") {
+          const trimmed = output.output.trim();
+          const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+          if (!isJson) {
+            output.output += "\n\n[OpenOwl] CEREBRUM NUDGE: You've made 10 file changes this session. " +
+              "If you learned anything worth remembering across sessions, append it to .owl/cerebrum.md " +
+              "(format: `- [scope] YYYY-MM-DD: concise description`). See OWL.md for details.";
+          }
+        }
+      }
     },
 
     "experimental.session.compacting": async (input, output) => {

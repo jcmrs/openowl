@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.1 (2026-04-15)
+
+### Features
+- Close the learning loop: injection block now includes a `## Contributing` section prompting the model to record insights to `.owl/cerebrum.md` every turn
+- Session compaction hook now prompts the model to reflect on learnings before continuing
+- Every 10th write/edit appends a cerebrum nudge reminder to tool output
+
+### Bug Fixes
+- Fix CHANGELOG dates for v0.2.0–v0.3.3 (all were 2026-04-15, not 04-14)
+- Fix memory.md session-end row column count (now 5 columns, matching session-start and memory-logger)
+- Truncation marker now uses XML comment inside owl-context
+- session-created.ts error logging now passes full error object for stack traces
+- Config warnings now use `CONFIG:` tag prefix for consistency
+
+### Documentation
+- Document all deferred items (E2E-26, E2E-28, GAP-02, GAP-05) in AGENTS.md
+- Document Dashboard as open challenge in AGENTS.md
+- Add OpenWolf attribution to LICENSE per AGPL-3.0 Sections 4 and 5
+- Backfill CHANGELOG for v0.2.0–v0.3.3 from git history
+
 ## 0.4.0 (2026-04-15)
 
 Comprehensive audit remediation — 208 findings across 5 audits (E2E, SILENT, PARSE, GAP, API), deduplicated to ~25 root causes and resolved in 7 batches.
