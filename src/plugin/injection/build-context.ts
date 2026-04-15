@@ -125,7 +125,7 @@ function parseCerebrumEntries(content: string): CerebrumEntry[] {
       continue;
     }
 
-    const entryMatch = line.match(/^-\s+\[([^\]]+)\]\s+(\d{4}-\d{2}-\d{2})?\s*[:：]?\s*(.+)/);
+    const entryMatch = line.match(/^\s*-\s+\[([^\]]+)\]\s+(\d{4}-\d{2}-\d{2})?\s*[:：]?\s*(.+)/);
     if (entryMatch) {
       entries.push({
         tag: entryMatch[1],
@@ -136,7 +136,7 @@ function parseCerebrumEntries(content: string): CerebrumEntry[] {
       continue;
     }
 
-    const legacyMatch = line.match(/^-\s+(.+)/);
+    const legacyMatch = line.match(/^\s*-\s+(.+)/);
     if (legacyMatch && currentSection) {
       entries.push({
         tag: "general",
@@ -168,8 +168,8 @@ function buildDNRSection(owlDir: string): string {
     const dnrText = nextHeading === -1 ? dnrSection : dnrSection.slice(0, nextHeading);
     const legacyEntries = dnrText
       .split("\n")
-      .filter((l) => l.startsWith("- "))
-      .map((l) => l.slice(2).trim())
+      .filter((l) => l.match(/^\s*-\s/))
+      .map((l) => l.replace(/^\s*-\s+/, "").trim())
       .filter(Boolean);
 
     if (legacyEntries.length === 0) return "";
@@ -207,8 +207,8 @@ function buildConventionsSection(owlDir: string): string {
     const klText = nextHeading === -1 ? klSection : klSection.slice(0, nextHeading);
     const legacyEntries = klText
       .split("\n")
-      .filter((l) => l.startsWith("- ") && l.length > 10)
-      .map((l) => l.slice(2).trim())
+      .filter((l) => l.match(/^\s*-\s/) && l.length > 10)
+      .map((l) => l.replace(/^\s*-\s+/, "").trim())
       .filter(Boolean);
 
     if (legacyEntries.length === 0) return "";

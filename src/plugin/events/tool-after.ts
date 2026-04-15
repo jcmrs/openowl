@@ -29,7 +29,7 @@ export async function handleToolAfter(
   if (!session) return;
 
   if (input.tool === "read") {
-    const filePath = input.args?.path ?? input.args?.file_path ?? "";
+    const filePath = input.args?.filePath ?? input.args?.path ?? input.args?.file_path ?? "";
     if (!filePath) return;
 
     const outputContent = output?.output ?? "";
@@ -42,7 +42,7 @@ export async function handleToolAfter(
   }
 
   if (input.tool === "write" || input.tool === "edit") {
-    const filePath = input.args?.path ?? input.args?.file_path ?? "";
+    const filePath = input.args?.filePath ?? input.args?.path ?? input.args?.file_path ?? "";
     if (!filePath) return;
 
     try {
@@ -51,7 +51,7 @@ export async function handleToolAfter(
       console.error("[OpenOwl] Failed to update anatomy:", err);
     }
 
-    const content = input.args?.content ?? input.args?.new_string ?? "";
+    const content = input.args?.content ?? input.args?.newString ?? input.args?.new_string ?? "";
     const tokens = estimateTokens(content, filePath);
     const summary = path.basename(filePath);
 
@@ -62,7 +62,7 @@ export async function handleToolAfter(
       warnings.push(`MULTI-EDIT: ${filePath} has been edited ${editCount} times this session — this may indicate a bug`);
     }
 
-    const oldContent = input.args?.old_string ?? "";
+    const oldContent = input.args?.oldString ?? input.args?.old_string ?? "";
     if (content) {
       const bugResult = detectBugFix(filePath, content, oldContent);
       if (bugResult.detected) {

@@ -17,6 +17,8 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
   const owlDir = getOwlDir(projectRoot);
   const owlReady = fs.existsSync(owlDir);
 
+  const pendingWarnings = new Map<string, string[]>();
+
   let injectionConfig: ReturnType<typeof validateInjectionConfig>["config"];
   if (owlReady) {
     const fullConfig = readJSON<Record<string, unknown>>(path.join(owlDir, "config.json"), {});
@@ -96,12 +98,22 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
       } catch (err) {
         console.error("[OpenOwl] Error in tool.execute.before:", err);
       }
+      if (warnings.length > 0) {
+        pendingWarnings.set(input.callID, warnings);
+      }
       await logWarnings(warnings);
     },
 
     "tool.execute.after": async (input, output) => {
       if (!owlReady) return;
       const warnings: string[] = [];
+
+      const beforeWarnings = pendingWarnings.get(input.callID);
+      if (beforeWarnings) {
+        warnings.push(...beforeWarnings);
+        pendingWarnings.delete(input.callID);
+      }
+
       try {
         await handleToolAfter(owlDir, projectRoot, input, output, warnings);
       } catch (err) {

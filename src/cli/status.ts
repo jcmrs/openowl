@@ -64,11 +64,22 @@ export async function statusCommand(): Promise<void> {
     lifetime: { total_sessions: 0, total_reads: 0, total_writes: 0, total_tokens_estimated: 0, estimated_savings_vs_bare_cli: 0 },
   });
 
+  const activeSession = readJSON<{
+    reads: unknown[];
+    writes: unknown[];
+    total_read_tokens: number;
+    total_write_tokens: number;
+  } | null>(path.join(owlDir, "_session.json"), null);
+
+  const liveReads = activeSession ? activeSession.reads.length : 0;
+  const liveWrites = activeSession ? activeSession.writes.length : 0;
+  const liveTokens = activeSession ? activeSession.total_read_tokens + activeSession.total_write_tokens : 0;
+
   console.log(`\nToken Stats:`);
   console.log(`  Sessions: ${ledger.lifetime.total_sessions}`);
-  console.log(`  Total reads: ${ledger.lifetime.total_reads}`);
-  console.log(`  Total writes: ${ledger.lifetime.total_writes}`);
-  console.log(`  Tokens tracked: ~${ledger.lifetime.total_tokens_estimated.toLocaleString()}`);
+  console.log(`  Total reads: ${ledger.lifetime.total_reads + liveReads}${liveReads > 0 ? ` (${liveReads} this session)` : ""}`);
+  console.log(`  Total writes: ${ledger.lifetime.total_writes + liveWrites}${liveWrites > 0 ? ` (${liveWrites} this session)` : ""}`);
+  console.log(`  Tokens tracked: ~${(ledger.lifetime.total_tokens_estimated + liveTokens).toLocaleString()}`);
   console.log(`  Estimated savings: ~${ledger.lifetime.estimated_savings_vs_bare_cli.toLocaleString()} tokens`);
 
   const anatomyContent = readText(path.join(owlDir, "anatomy.md"));

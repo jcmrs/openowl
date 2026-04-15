@@ -27,7 +27,7 @@ export async function handleToolBefore(
   const args = output?.args ?? {};
 
   if (input.tool === "read") {
-    const filePath = args?.path ?? args?.file_path ?? "";
+    const filePath = args?.filePath ?? args?.path ?? args?.file_path ?? "";
     if (!filePath) return;
 
     const result = checkAnatomy(owlDir, projectRoot, filePath, new Set(session.reads.map((r) => r.file_path)));
@@ -45,8 +45,8 @@ export async function handleToolBefore(
   }
 
   if (input.tool === "write" || input.tool === "edit") {
-    const filePath = args?.path ?? args?.file_path ?? "";
-    const content = args?.content ?? args?.new_string ?? "";
+    const filePath = args?.filePath ?? args?.path ?? args?.file_path ?? "";
+    const content = args?.content ?? args?.newString ?? args?.new_string ?? "";
 
     if (!filePath) return;
 
