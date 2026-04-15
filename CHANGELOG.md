@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0 (2026-04-15)
+
+### Bug Detection Enhancement
+- Added 13 structural-diff categories: error-handling, null-safety, guard-clause, wrong-value, wrong-reference, logic-fix, operator-fix, missing-import, return-value, async-fix, type-fix, style-fix, refactor. These compare old/new code structure to detect what changed, complementing the existing content-scan approach.
+- Structural diff runs first for edits; content-scan used as fallback for fresh writes (no old content).
+- Fix field now populated for structural detections (was always "unknown").
+- File-type exclusions: test files, specs, markdown, and JSON are excluded from bug detection.
+- Buglog guard now surfaces actual bug details (ID, error message, fix) — limited to 2 bugs instead of just a count.
+- Dedup threshold lowered to 0.7 for same-file+same-category bugs.
+
+### Session Resume
+- Added `session.updated` event handler — creates OpenOwl session if `_session.json` is missing (handles OpenCode idle→resume→continue flow).
+- Added `session.status` event handler alongside deprecated `session.idle` for forward compatibility.
+- Session resume detection: existing `_session.json` now triggers "(resumed)" header instead of incrementing session counter.
+
+### Injection Pipeline Polish
+- Fixed `trimToTokenBudget`: all `## ` headings are now treated as header (not just the first), preventing mid-section truncation that produced malformed output.
+- Removed dead `includeFilesPattern` from `RelevanceOptions` interface.
+- Conventions section now takes most recent 8 entries (was first 8).
+- Empty `.owl/` produces no injection block at all (footer removed when no content).
+- Added mtime-based injection cache — reads files from disk only when mtimes change, with `invalidateInjectionCache()` export for external invalidation.
+
+### Test Updates
+- Updated `tool-before.test.ts` for new bug detail warning text format.
+- 179 tests pass across 31 files.
+
 ## 0.5.0 (2026-04-15)
 
 ### Critical Fixes

@@ -1,4 +1,5 @@
-import { initSession } from "../context/session-manager.js";
+import { initSession, readSession } from "../context/session-manager.js";
+import { appendText } from "../../core/utils/fs-safe.js";
 import { stat } from "node:fs/promises";
 
 export async function handleSessionCreated(
@@ -6,7 +7,20 @@ export async function handleSessionCreated(
   sessionId: string,
   warnings: string[]
 ): Promise<void> {
-  initSession(owlDir, sessionId);
+  const existingSession = readSession(owlDir);
+  const isResume = !!existingSession;
+
+  if (isResume) {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    appendText(
+      `${owlDir}/memory.md`,
+      `\n## Session: ${dateStr} ${timeStr} (resumed)\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`
+    );
+  } else {
+    initSession(owlDir, sessionId);
+  }
 
   try {
     const cerebrumPath = `${owlDir}/cerebrum.md`;

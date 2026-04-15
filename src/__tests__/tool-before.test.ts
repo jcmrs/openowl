@@ -181,6 +181,6 @@ describe("handleToolBefore", () => {
     );
 
     expect(warnings.some((w) => w.includes("BUGLOG"))).toBe(true);
-    expect(warnings.some((w) => w.includes("similar bug"))).toBe(true);
+    expect(warnings.some((w) => w.includes("bug(s) for"))).toBe(true);
   });
 });

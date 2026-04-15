@@ -1,6 +1,5 @@
 export interface RelevanceOptions {
   maxFileEntries: number;
-  includeFilesPattern?: RegExp;
 }
 
 export interface RelevanceResult {

@@ -3,6 +3,25 @@ import * as path from "node:path";
 import { readText, readJSON } from "../../core/utils/fs-safe.js";
 import { selectRelevantEntries } from "./relevance.js";
 
+const DATA_FILES = ["cerebrum.md", "anatomy.md", "buglog.json", "config.json"];
+let cachedBlock = "";
+let cachedMtime = 0;
+
+interface CerebrumEntry {
+  tag: string;
+  date: string;
+  text: string;
+  section: string;
+}
+
+interface BugEntry {
+  id: string;
+  error_message: string;
+  file: string;
+  fix: string;
+  occurrences: number;
+}
+
 export interface InjectionConfig {
   enabled: boolean;
   max_tokens: number;
@@ -23,29 +42,6 @@ const DEFAULT_CONFIG: InjectionConfig = {
   include_bugs: true,
 };
 
-interface CerebrumEntry {
-  tag: string;
-  date: string;
-  text: string;
-  section: string;
-}
-
-interface AnatomyDirectory {
-  path: string;
-  summary: string;
-  files: number;
-  tokens: number;
-}
-
-interface BugEntry {
-  id: string;
-  error_message: string;
-  file: string;
-  fix: string;
-  tags: string[];
-  occurrences: number;
-}
-
 export function buildInjectionContext(
   owlDir: string,
   projectRoot: string,
@@ -54,6 +50,11 @@ export function buildInjectionContext(
 ): string {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   if (!cfg.enabled) return "";
+
+  const currentMtime = getLatestMtime(owlDir);
+  if (cachedBlock && cachedMtime === currentMtime) {
+    return cachedBlock;
+  }
 
   const sections: Array<{ priority: number; content: string }> = [];
 
@@ -84,6 +85,9 @@ export function buildInjectionContext(
 
   sections.sort((a, b) => a.priority - b.priority);
 
+  const hasContent = sections.some((s) => s.content.trim().length > 0);
+  if (!hasContent) return "";
+
   let block = "<owl-context>\n";
   for (const s of sections) {
     block += s.content + "\n";
@@ -93,6 +97,22 @@ export function buildInjectionContext(
   block += "</owl-context>";
 
   return trimToTokenBudget(block, cfg.max_tokens, tokenRatios);
+}
+
+function getLatestMtime(owlDir: string): number {
+  let latest = 0;
+  for (const file of DATA_FILES) {
+    try {
+      const stat = fs.statSync(path.join(owlDir, file));
+      if (stat.mtimeMs > latest) latest = stat.mtimeMs;
+    } catch {}
+  }
+  return latest;
+}
+
+export function invalidateInjectionCache(): void {
+  cachedBlock = "";
+  cachedMtime = 0;
 }
 
 function buildProjectSection(owlDir: string, projectRoot: string): string {
@@ -218,7 +238,7 @@ function buildConventionsSection(owlDir: string): string {
     if (legacyEntries.length === 0) return "";
 
     let section = "## Key Conventions\n";
-    for (const entry of legacyEntries.slice(0, 8)) {
+    for (const entry of conventionEntries.slice(-8).reverse()) {
       section += `- ${entry}\n`;
     }
     return section;
@@ -285,18 +305,16 @@ function trimToTokenBudget(block: string, maxTokens: number, tokenRatios?: { cod
   const lines = block.split("\n");
   const header: string[] = [];
   const body: string[] = [];
-  let pastHeader = false;
 
   for (const line of lines) {
     if (line.startsWith("<owl-context>") || line.startsWith("</owl-context>")) {
       header.push(line);
       continue;
     }
-    if (line.startsWith("## ") && !pastHeader) {
+    if (line.startsWith("## ")) {
       header.push(line);
       continue;
     }
-    pastHeader = true;
     body.push(line);
   }
 

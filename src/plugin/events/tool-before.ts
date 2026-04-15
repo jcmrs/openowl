@@ -56,7 +56,10 @@ export async function handleToolBefore(
 
     const bugCheck = checkBuglog(owlDir, filePath);
     if (bugCheck.similarBugs.length > 0) {
-      warnings.push(`BUGLOG: ${bugCheck.similarBugs.length} similar bug(s) on record for ${filePath}`);
+      const details = bugCheck.similarBugs
+        .map((b) => `  - [${b.id}] ${b.error_message?.slice(0, 80) ?? "unknown"}${b.fix && b.fix !== "unknown" ? ` (fix: ${b.fix.slice(0, 60)})` : ""}`)
+        .join("\n");
+      warnings.push(`BUGLOG: ${bugCheck.similarBugs.length} bug(s) for ${path.basename(filePath)}:\n${details}`);
     }
 
     const dnrPatterns = extractDoNotRepeatPatterns(owlDir);

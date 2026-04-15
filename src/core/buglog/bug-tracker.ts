@@ -44,8 +44,12 @@ export function logBug(
   const now = new Date().toISOString();
 
   const similar = findSimilarBugs(owlDir, bug.error_message);
-  if (similar.length > 0 && similar[0].score > 0.8) {
-    const existing = bugLog.bugs.find((b) => b.id === similar[0].bug.id);
+  const topMatch = similar.length > 0 ? similar[0] : null;
+  const sameFile = topMatch && normalize(topMatch.bug.file ?? "") === normalize(bug.file ?? "");
+  const sameCategory = topMatch && topMatch.bug.tags?.some((t) => bug.tags?.includes(t));
+  const threshold = (sameFile && sameCategory) ? 0.7 : 0.8;
+  if (topMatch && topMatch.score > threshold) {
+    const existing = bugLog.bugs.find((b) => b.id === topMatch.bug.id);
     if (existing) {
       existing.occurrences++;
       existing.last_seen = now;

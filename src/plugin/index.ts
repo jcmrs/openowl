@@ -8,7 +8,7 @@ import { handleToolBefore } from "./events/tool-before.js";
 import { handleToolAfter } from "./events/tool-after.js";
 import { handleSessionCreated } from "./events/session-created.js";
 import { handleSessionCompacted } from "./events/session-compacted.js";
-import { finalizeSession } from "./context/session-manager.js";
+import { finalizeSession, readSession } from "./context/session-manager.js";
 import { buildInjectionContext } from "./injection/build-context.js";
 import { validateInjectionConfig } from "./injection/token-budget.js";
 
@@ -88,11 +88,20 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
             await handleSessionCreated(owlDir, sessionId, warnings);
             break;
           }
-          case "session.idle": {
+          case "session.idle":
+          case "session.status": {
             try {
               finalizeSession(owlDir);
             } catch (err) {
               console.error("[OpenOwl] Error finalizing session:", err);
+            }
+            break;
+          }
+          case "session.updated": {
+            const existingSession = readSession(owlDir);
+            if (!existingSession) {
+              const sessionId = e?.properties?.info?.id ?? "unknown";
+              await handleSessionCreated(owlDir, sessionId, warnings);
             }
             break;
           }

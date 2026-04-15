@@ -46,7 +46,7 @@ export function checkBuglog(
   });
 
   return {
-    similarBugs: relevant.slice(0, 3).map((b) => ({
+    similarBugs: relevant.slice(0, 2).map((b) => ({
       id: b.id,
       error_message: b.error_message,
       file: b.file,
