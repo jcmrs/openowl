@@ -20,16 +20,16 @@ export function validateInjectionConfig(config: Record<string, unknown>): { conf
   };
 
   if (!isFinite(result.max_tokens) || isNaN(result.max_tokens)) {
-    warnings.push("injection.max_tokens is not a valid number. Defaulting to 2500.");
+    warnings.push("CONFIG: injection.max_tokens is not a valid number. Defaulting to 2500.");
     result.max_tokens = 2500;
   }
 
   if (result.max_tokens < 500) {
-    warnings.push("injection.max_tokens is very low (< 500). Consider increasing.");
+    warnings.push("CONFIG: injection.max_tokens is very low (< 500). Consider increasing.");
     result.max_tokens = 500;
   }
   if (result.max_tokens > 10000) {
-    warnings.push("injection.max_tokens is very high (> 10000). This may impact performance.");
+    warnings.push("CONFIG: injection.max_tokens is very high (> 10000). This may impact performance.");
     result.max_tokens = 10000;
   }
 

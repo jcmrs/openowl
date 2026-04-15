@@ -17,7 +17,7 @@ export async function handleSessionCreated(
     }
   } catch (err: any) {
     if (err.code !== "ENOENT") {
-      console.error("[OpenOwl] Error checking cerebrum staleness:", err.message);
+      console.error("[OpenOwl] Error checking cerebrum staleness:", err);
     }
   }
 
@@ -30,7 +30,7 @@ export async function handleSessionCreated(
     }
   } catch (err: any) {
     if (err.code !== "ENOENT") {
-      console.error("[OpenOwl] Error checking buglog size:", err.message);
+      console.error("[OpenOwl] Error checking buglog size:", err);
     }
   }
 }

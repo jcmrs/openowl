@@ -308,7 +308,7 @@ function trimToTokenBudget(block: string, maxTokens: number, tokenRatios?: { cod
   }
 
   if (trimmed.length < body.length) {
-    trimmed.push("... (truncated for token budget)");
+    trimmed.push("<!-- owl-context: truncated for token budget -->");
   }
 
   return [...header, ...trimmed].join("\n");

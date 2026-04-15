@@ -193,6 +193,6 @@ export function finalizeSession(owlDir: string): void {
 
   appendText(
     path.join(owlDir, "memory.md"),
-    `\n| --:-- | Session ended | ${state.reads.length} reads, ${state.writes.length} writes | ~${state.total_read_tokens + state.total_write_tokens} tokens |\n`
+    `\n| --:-- | Session ended | — | ${state.reads.length} reads, ${state.writes.length} writes | ~${state.total_read_tokens + state.total_write_tokens} tokens |\n`
   );
 }
