@@ -6,3 +6,6 @@ UPSTREAM/
 *.tsbuildinfo
 .env
 .env.*
+docs/decisions/
+docs/research/
+docs/specs/
