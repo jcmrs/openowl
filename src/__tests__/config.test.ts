@@ -63,4 +63,10 @@ describe("config validation", () => {
     expect(sanitized.openowl.dashboard.port).toBe(18791);
     expect(sanitized.openowl.cron.heartbeat_interval_minutes).toBe(30);
   });
+
+  it("sanitizeConfig returns as-is when openowl is undefined", () => {
+    const config = { version: 1 } as any;
+    const sanitized = sanitizeConfig(config);
+    expect(sanitized).toBe(config);
+  });
 });

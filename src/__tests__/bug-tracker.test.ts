@@ -84,4 +84,17 @@ describe("bug-tracker", () => {
   it("returns empty for nonexistent directory", () => {
     expect(searchBugs("/nonexistent/path", "anything")).toHaveLength(0);
   });
+
+  it("searchBugs handles null error_message and tags", () => {
+    const buglogPath = path.join(tmpDir, "buglog.json");
+    fs.writeFileSync(buglogPath, JSON.stringify({
+      version: 1,
+      bugs: [
+        { id: "bug-1", timestamp: "2026-01-01T00:00:00Z", error_message: null, file: "a.ts", root_cause: "r", fix: "f", tags: null, related_bugs: [], occurrences: 1, last_seen: "2026-01-01T00:00:00Z" },
+        { id: "bug-2", timestamp: "2026-01-01T00:00:00Z", error_message: "real error", file: "b.ts", root_cause: null, fix: null, tags: ["tag1"], related_bugs: [], occurrences: 1, last_seen: "2026-01-01T00:00:00Z" },
+      ],
+    }));
+
+    expect(() => searchBugs(tmpDir, "anything")).not.toThrow();
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectRelevantEntries, selectRelevantBugs } from "../plugin/injection/relevance.js";
+import { selectRelevantEntries } from "../plugin/injection/relevance.js";
 
 describe("selectRelevantEntries", () => {
   const anatomyContent = `# anatomy.md
@@ -88,68 +88,5 @@ Core module
     const result = selectRelevantEntries(content);
     expect(result.directorySummaries).toHaveLength(1);
     expect(result.directorySummaries[0]).toContain("Core module");
-  });
-});
-
-describe("selectRelevantBugs", () => {
-  it("returns empty for empty content", () => {
-    expect(selectRelevantBugs("", [])).toHaveLength(0);
-    expect(selectRelevantBugs(null as any, [])).toHaveLength(0);
-  });
-
-  it("filters bugs by relevant files", () => {
-    const buglog = JSON.stringify({
-      bugs: [
-        { id: "bug-1", error_message: "Type error", file: "src/auth.ts", fix: "", tags: [], occurrences: 1 },
-        { id: "bug-2", error_message: "Import error", file: "src/utils.ts", fix: "", tags: [], occurrences: 1 },
-        { id: "bug-3", error_message: "Parse error", file: "src/config.ts", fix: "", tags: [], occurrences: 2 },
-      ],
-    });
-
-    const result = selectRelevantBugs(buglog, ["src/auth.ts", "src/utils.ts"]);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toContain("bug-1");
-    expect(result[1]).toContain("bug-2");
-  });
-
-  it("falls back to first 3 when no relevant files match", () => {
-    const buglog = JSON.stringify({
-      bugs: [
-        { id: "bug-1", error_message: "Type error", file: "src/auth.ts", fix: "", tags: [], occurrences: 1 },
-        { id: "bug-2", error_message: "Import error", file: "src/utils.ts", fix: "", tags: [], occurrences: 1 },
-        { id: "bug-3", error_message: "Parse error", file: "src/config.ts", fix: "", tags: [], occurrences: 2 },
-      ],
-    });
-
-    const result = selectRelevantBugs(buglog, ["src/other.ts"]);
-    expect(result).toHaveLength(3);
-  });
-
-  it("handles invalid JSON gracefully", () => {
-    expect(selectRelevantBugs("not json", [])).toHaveLength(0);
-  });
-
-  it("skips fixed bugs", () => {
-    const buglog = JSON.stringify({
-      bugs: [
-        { id: "bug-1", error_message: "Fixed error", file: "src/a.ts", fix: "Added null check", tags: [], occurrences: 1 },
-        { id: "bug-2", error_message: "Open error", file: "src/b.ts", fix: "", tags: [], occurrences: 1 },
-      ],
-    });
-
-    const result = selectRelevantBugs(buglog, ["src/a.ts", "src/b.ts"]);
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain("bug-2");
-  });
-
-  it("includes occurrence count for repeated bugs", () => {
-    const buglog = JSON.stringify({
-      bugs: [
-        { id: "bug-1", error_message: "Repeated error", file: "src/a.ts", fix: "", tags: [], occurrences: 5 },
-      ],
-    });
-
-    const result = selectRelevantBugs(buglog, ["src/a.ts"]);
-    expect(result[0]).toContain("(5x)");
   });
 });

@@ -124,10 +124,10 @@ export function searchBugs(owlDir: string, term: string): BugEntry[] {
   const lower = term.toLowerCase();
   return bugLog.bugs.filter(
     (b) =>
-      b.error_message.toLowerCase().includes(lower) ||
-      b.root_cause.toLowerCase().includes(lower) ||
-      b.fix.toLowerCase().includes(lower) ||
-      b.tags.some((t) => t.toLowerCase().includes(lower)) ||
-      b.file.toLowerCase().includes(lower)
+      (b.error_message ?? "").toLowerCase().includes(lower) ||
+      (b.root_cause ?? "").toLowerCase().includes(lower) ||
+      (b.fix ?? "").toLowerCase().includes(lower) ||
+      (b.tags ?? []).some((t) => t.toLowerCase().includes(lower)) ||
+      (b.file ?? "").toLowerCase().includes(lower)
   );
 }

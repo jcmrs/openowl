@@ -20,6 +20,7 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
   const pendingWarnings = new Map<string, string[]>();
 
   let injectionConfig: ReturnType<typeof validateInjectionConfig>["config"];
+  let tokenRatios: { code: number; prose: number; mixed: number } | undefined;
   if (owlReady) {
     const fullConfig = readJSON<Record<string, unknown>>(path.join(owlDir, "config.json"), {});
     const owlConfig = (fullConfig.openowl ?? {}) as Record<string, unknown>;
@@ -27,6 +28,16 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
       (owlConfig.injection ?? {}) as Record<string, unknown>
     );
     injectionConfig = config;
+
+    const ta = (owlConfig.token_audit ?? {}) as Record<string, unknown>;
+    if (ta.chars_per_token_code || ta.chars_per_token_prose || ta.chars_per_token_mixed) {
+      tokenRatios = {
+        code: typeof ta.chars_per_token_code === "number" ? ta.chars_per_token_code : 3.0,
+        prose: typeof ta.chars_per_token_prose === "number" ? ta.chars_per_token_prose : 3.8,
+        mixed: typeof ta.chars_per_token_mixed === "number" ? ta.chars_per_token_mixed : 3.4,
+      };
+    }
+
     for (const w of configWarnings) {
       console.warn(`[OpenOwl] ${w}`);
     }
@@ -53,7 +64,7 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
     "experimental.chat.system.transform": async (input, output) => {
       if (!injectionConfig.enabled || !owlReady) return;
       try {
-        const block = buildInjectionContext(owlDir, projectRoot, injectionConfig);
+        const block = buildInjectionContext(owlDir, projectRoot, injectionConfig, tokenRatios);
         if (block) {
           output.system.push(block);
         }
@@ -121,9 +132,18 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
       }
 
       if (warnings.length > 0 && typeof output.output === "string") {
-        const prefix = "\n\n[OpenOwl] ";
-        const warningText = warnings.map((w) => `${prefix}${w}`).join("\n");
-        output.output = output.output + warningText;
+        const trimmed = output.output.trim();
+        const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+        if (isJson) {
+          // TODO(future): OpenCode doesn't provide a separate warning channel.
+          // Once one exists, route warnings there instead of suppressing.
+          // For now, suppress to avoid corrupting JSON tool output.
+          console.warn(`[OpenOwl] Suppressing ${warnings.length} warning(s) for JSON tool output`);
+        } else {
+          const prefix = "\n\n[OpenOwl] ";
+          const warningText = warnings.map((w) => `${prefix}${w}`).join("\n");
+          output.output = output.output + warningText;
+        }
       }
 
       await logWarnings(warnings);

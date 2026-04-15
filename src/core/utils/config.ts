@@ -110,6 +110,8 @@ export function validateConfig(config: OwlConfig): ConfigWarning[] {
 export function sanitizeConfig(config: OwlConfig): OwlConfig {
   const owl = config.openowl;
 
+  if (!owl) return config;
+
   if (owl.daemon?.port !== undefined && (owl.daemon.port < 1 || owl.daemon.port > 65535 || !isFinite(owl.daemon.port))) {
     owl.daemon.port = 18790;
   }

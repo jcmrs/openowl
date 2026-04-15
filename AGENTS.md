@@ -2,7 +2,7 @@
 
 @.owl/OWL.md
 
-This project uses OpenOwl for context management. Read and follow .owl/OWL.md every session. Check .owl/cerebrum.md before generating code. Check .owl/anatomy.md before reading files.
+This project uses OpenOwl for context management. Read and follow .owl/OWL.md every session. Check .owl/cerebrum.md before generating code in this project (OpenOwl's own dev memory, not auto-injected). Check .owl/anatomy.md before reading files in this project.
 
 ## Project Overview
 

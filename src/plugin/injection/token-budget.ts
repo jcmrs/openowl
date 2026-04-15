@@ -19,6 +19,11 @@ export function validateInjectionConfig(config: Record<string, unknown>): { conf
     include_bugs: typeof config.include_bugs === "boolean" ? config.include_bugs : true,
   };
 
+  if (!isFinite(result.max_tokens) || isNaN(result.max_tokens)) {
+    warnings.push("injection.max_tokens is not a valid number. Defaulting to 2500.");
+    result.max_tokens = 2500;
+  }
+
   if (result.max_tokens < 500) {
     warnings.push("injection.max_tokens is very low (< 500). Consider increasing.");
     result.max_tokens = 500;

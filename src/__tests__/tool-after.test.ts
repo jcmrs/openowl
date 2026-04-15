@@ -56,7 +56,7 @@ describe("handleToolAfter", () => {
     await handleToolAfter(
       owlDir,
       projectRoot,
-      { tool: "write", sessionID: "sess-1", callID: "call-1", args: { path: targetFile, content: "export const x = 1;" } },
+      { tool: "write", sessionID: "sess-1", callID: "call-1", args: { filePath: targetFile, content: "export const x = 1;" } },
       { title: "write", output: "OK", metadata: {} },
       warnings
     );
@@ -86,7 +86,7 @@ describe("handleToolAfter", () => {
     await handleToolAfter(
       owlDir,
       projectRoot,
-      { tool: "read", sessionID: "sess-1", callID: "call-2", args: { path: "src/index.ts" } },
+      { tool: "read", sessionID: "sess-1", callID: "call-2", args: { filePath: "src/index.ts" } },
       { title: "read", output: "export const x = 1;\nexport const y = 2;", metadata: {} },
       warnings
     );
@@ -107,7 +107,7 @@ describe("handleToolAfter", () => {
     await handleToolAfter(
       owlDir,
       projectRoot,
-      { tool: "edit", sessionID: "sess-1", callID: "call-3", args: { path: targetFile, old_string: "old", new_string: "const result = obj.nested.value;\nconst msg = TypeError: Cannot read properties of undefined (reading 'nested')\n" } },
+      { tool: "edit", sessionID: "sess-1", callID: "call-3", args: { filePath: targetFile, oldString: "old", newString: "const result = obj.nested.value;\nconst msg = TypeError: Cannot read properties of undefined (reading 'nested')\n" } },
       { title: "edit", output: "OK", metadata: {} },
       warnings
     );
@@ -134,7 +134,7 @@ describe("handleToolAfter", () => {
     await handleToolAfter(
       owlDir,
       projectRoot,
-      { tool: "write", sessionID: "sess-1", callID: "call-4", args: { path: targetFile, content: "more edits" } },
+      { tool: "write", sessionID: "sess-1", callID: "call-4", args: { filePath: targetFile, content: "more edits" } },
       { title: "write", output: "OK", metadata: {} },
       warnings
     );
@@ -151,7 +151,7 @@ describe("handleToolAfter", () => {
       await handleToolAfter(
         emptyOwl,
         projectRoot,
-        { tool: "read", sessionID: "sess-1", callID: "call-5", args: { path: "x.ts" } },
+        { tool: "read", sessionID: "sess-1", callID: "call-5", args: { filePath: "x.ts" } },
         { title: "read", output: "", metadata: {} },
         warnings
       );

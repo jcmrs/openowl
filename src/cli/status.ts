@@ -80,7 +80,7 @@ export async function statusCommand(): Promise<void> {
   console.log(`  Total reads: ${ledger.lifetime.total_reads + liveReads}${liveReads > 0 ? ` (${liveReads} this session)` : ""}`);
   console.log(`  Total writes: ${ledger.lifetime.total_writes + liveWrites}${liveWrites > 0 ? ` (${liveWrites} this session)` : ""}`);
   console.log(`  Tokens tracked: ~${(ledger.lifetime.total_tokens_estimated + liveTokens).toLocaleString()}`);
-  console.log(`  Estimated savings: ~${ledger.lifetime.estimated_savings_vs_bare_cli.toLocaleString()} tokens`);
+  console.log(`  Savings tracking: requires repeated-read blocking (future)`);
 
   const anatomyContent = readText(path.join(owlDir, "anatomy.md"));
   const entryCount = (anatomyContent.match(/^- `/gm) || []).length;

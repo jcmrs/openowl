@@ -85,8 +85,7 @@ export function daemonStart(): void {
   const daemonScript = path.resolve(__dirname, "..", "core", "daemon", "owl-daemon.js");
 
   if (!fs.existsSync(daemonScript)) {
-    console.log("Daemon script not found. Phase 4 (daemon) is not yet implemented.");
-    console.log("Run 'openowl init' first, then check back after daemon support is added.");
+    console.log("Daemon script not found. Run 'npm run build' first, then try again.");
     return;
   }
 

@@ -48,7 +48,8 @@ interface BugEntry {
 export function buildInjectionContext(
   owlDir: string,
   projectRoot: string,
-  config?: Partial<InjectionConfig>
+  config?: Partial<InjectionConfig>,
+  tokenRatios?: { code: number; prose: number; mixed: number }
 ): string {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   if (!cfg.enabled) return "";
@@ -88,7 +89,7 @@ export function buildInjectionContext(
   }
   block += "</owl-context>";
 
-  return trimToTokenBudget(block, cfg.max_tokens);
+  return trimToTokenBudget(block, cfg.max_tokens, tokenRatios);
 }
 
 function buildProjectSection(owlDir: string, projectRoot: string): string {
@@ -160,11 +161,11 @@ function buildDNRSection(owlDir: string): string {
 
   if (dnrEntries.length === 0) {
     const legacyContent = content;
-    const dnrIdx = legacyContent.indexOf("## Do-Not-Repeat");
+    const dnrIdx = legacyContent.search(/##\s+do-not-repeat/i);
     if (dnrIdx === -1) return "";
 
     const dnrSection = legacyContent.slice(dnrIdx);
-    const nextHeading = dnrSection.indexOf("\n## ", 1);
+    const nextHeading = dnrSection.search(/\n##\s+/i);
     const dnrText = nextHeading === -1 ? dnrSection : dnrSection.slice(0, nextHeading);
     const legacyEntries = dnrText
       .split("\n")
@@ -199,11 +200,11 @@ function buildConventionsSection(owlDir: string): string {
   );
 
   if (conventionEntries.length === 0) {
-    const klIdx = content.indexOf("## Key Learnings");
+    const klIdx = content.search(/##\s+key\s+learnings/i);
     if (klIdx === -1) return "";
 
     const klSection = content.slice(klIdx);
-    const nextHeading = klSection.indexOf("\n## ", 1);
+    const nextHeading = klSection.search(/\n##\s+/i);
     const klText = nextHeading === -1 ? klSection : klSection.slice(0, nextHeading);
     const legacyEntries = klText
       .split("\n")
@@ -266,15 +267,16 @@ function buildBugsSection(owlDir: string): string {
 
   let section = "## Active Bugs\n";
   for (const bug of openBugs.slice(0, 5)) {
-    section += `- [${bug.id}] ${bug.file}: ${bug.error_message.slice(0, 80)}`;
+    section += `- [${bug.id}] ${bug.file}: ${(bug.error_message ?? "").slice(0, 80)}`;
     if (bug.occurrences > 1) section += ` (${bug.occurrences}x)`;
     section += "\n";
   }
   return section;
 }
 
-function trimToTokenBudget(block: string, maxTokens: number): string {
-  const estimatedTokens = Math.ceil(block.length / 3.5);
+function trimToTokenBudget(block: string, maxTokens: number, tokenRatios?: { code: number; prose: number; mixed: number }): string {
+  const ratio = tokenRatios?.mixed ?? 3.4;
+  const estimatedTokens = Math.ceil(block.length / ratio);
   if (estimatedTokens <= maxTokens) return block;
 
   const lines = block.split("\n");
@@ -295,7 +297,7 @@ function trimToTokenBudget(block: string, maxTokens: number): string {
     body.push(line);
   }
 
-  const maxBodyTokens = (maxTokens * 3.5) - header.join("\n").length;
+  const maxBodyTokens = (maxTokens * ratio) - header.join("\n").length;
   let totalLen = header.join("\n").length;
   const trimmed: string[] = [];
 

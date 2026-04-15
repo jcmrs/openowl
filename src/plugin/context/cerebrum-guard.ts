@@ -29,7 +29,9 @@ export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
         });
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error("[OpenOwl] Failed to read/parse cerebrum.md for DNR patterns:", err);
+  }
   return entries;
 }
 

@@ -107,7 +107,7 @@ describe("OpenOwlPlugin integration", () => {
     expect(output.system[output.system.length - 1]).toContain("<owl-context>");
 
     const toolBefore = hooks["tool.execute.before"] as Function;
-    const toolBeforeOutput = { args: { path: path.join(projectDir, "index.ts") } };
+    const toolBeforeOutput = { args: { filePath: path.join(projectDir, "index.ts") } };
     await toolBefore(
       { tool: "read", sessionID: "test-session-integration", callID: "call-1" },
       toolBeforeOutput
@@ -122,7 +122,7 @@ describe("OpenOwlPlugin integration", () => {
         tool: "write",
         sessionID: "test-session-integration",
         callID: "call-2",
-        args: { path: writeFilePath, content: "export const x = 2;\n" },
+        args: { filePath: writeFilePath, content: "export const x = 2;\n" },
       },
       { title: "write", output: "", metadata: {} }
     );

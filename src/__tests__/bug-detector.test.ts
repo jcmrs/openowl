@@ -1,5 +1,18 @@
-import { describe, it, expect } from "vitest";
-import { detectBugFix } from "../plugin/context/bug-detector.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as os from "node:os";
+import { detectBugFix, autoLogBug } from "../plugin/context/bug-detector.js";
+
+let tmpDir: string;
+
+beforeEach(() => {
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "owl-bug-det-"));
+});
+
+afterEach(() => {
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
 
 describe("bug-detector", () => {
   it("detects TypeError pattern in new content", () => {
@@ -43,5 +56,16 @@ function add(a: number, b: number): number {
 `;
     const result = detectBugFix("src/math.ts", content);
     expect(result.detected).toBe(false);
+  });
+
+  it("autoLogBug sets fix to 'unknown', not the summary", () => {
+    const result = detectBugFix("src/foo.ts", "TypeError: Cannot read properties of undefined (reading 'foo')\n");
+    expect(result.detected).toBe(true);
+
+    autoLogBug(tmpDir, "src/foo.ts", result);
+
+    const buglog = JSON.parse(fs.readFileSync(path.join(tmpDir, "buglog.json"), "utf-8"));
+    expect(buglog.bugs).toHaveLength(1);
+    expect(buglog.bugs[0].fix).toBe("unknown");
   });
 });

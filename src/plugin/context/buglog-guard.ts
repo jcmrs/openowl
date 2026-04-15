@@ -1,4 +1,5 @@
-import { findSimilarBugs } from "../../core/buglog/bug-tracker.js";
+import * as path from "node:path";
+import { readJSON } from "../../core/utils/fs-safe.js";
 
 export interface BuglogCheckResult {
   similarBugs: Array<{
@@ -10,29 +11,47 @@ export interface BuglogCheckResult {
   }>;
 }
 
+interface BugEntry {
+  id: string;
+  error_message: string;
+  file: string;
+  fix: string;
+  tags: string[];
+  occurrences: number;
+}
+
 export function checkBuglog(
   owlDir: string,
   filePath: string,
   content?: string
 ): BuglogCheckResult {
-  const errorMessage = content && content.trim().length > 0 ? content : filePath;
-  const similar = findSimilarBugs(owlDir, errorMessage);
+  const normalizedTarget = filePath.replace(/\\/g, "/");
 
-  const relevant = similar
-    .filter((s) => {
-      const normalizedFile = s.bug.file.replace(/\\/g, "/");
-      const normalizedTarget = filePath.replace(/\\/g, "/");
-      return normalizedFile === normalizedTarget || s.score > 0.5;
-    })
-    .slice(0, 3);
+  const buglog = readJSON<{ bugs: BugEntry[] }>(
+    path.join(owlDir, "buglog.json"),
+    { bugs: [] }
+  );
+
+  const relevant = buglog.bugs.filter((b) => {
+    const normalizedFile = (b.file ?? "").replace(/\\/g, "/");
+    if (normalizedFile === normalizedTarget) return true;
+
+    if (content && content.trim().length > 0) {
+      const lower = content.toLowerCase();
+      return (b.error_message ?? "").toLowerCase().includes(lower) ||
+             lower.includes((b.error_message ?? "").toLowerCase());
+    }
+
+    return false;
+  });
 
   return {
-    similarBugs: relevant.map((s) => ({
-      id: s.bug.id,
-      error_message: s.bug.error_message,
-      file: s.bug.file,
-      fix: s.bug.fix,
-      score: s.score,
+    similarBugs: relevant.slice(0, 3).map((b) => ({
+      id: b.id,
+      error_message: b.error_message,
+      file: b.file,
+      fix: b.fix,
+      score: 1.0,
     })),
   };
 }

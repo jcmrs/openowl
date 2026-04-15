@@ -129,7 +129,7 @@ export function autoLogBug(
     error_message: result.summary,
     file: filePath,
     root_cause: `Auto-detected ${result.category} pattern`,
-    fix: result.summary,
+    fix: "unknown",
     tags: result.tags,
   });
 }

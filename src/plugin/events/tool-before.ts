@@ -1,7 +1,8 @@
 import * as path from "node:path";
 import { checkAnatomy } from "../context/anatomy-guard.js";
+import { checkBuglog } from "../context/buglog-guard.js";
 import { extractDoNotRepeatPatterns, checkDoNotRepeat } from "../context/cerebrum-guard.js";
-import { readSession, recordRead, recordWrite, writeSession } from "../context/session-manager.js";
+import { initSession, readSession, recordRead, recordWrite, writeSession } from "../context/session-manager.js";
 import { estimateTokens } from "../context/token-tracker.js";
 
 interface ToolBeforeInput {
@@ -22,12 +23,15 @@ export async function handleToolBefore(
   warnings: string[]
 ): Promise<void> {
   const session = readSession(owlDir);
-  if (!session) return;
+  if (!session) {
+    initSession(owlDir, input.sessionID);
+    return;
+  }
 
   const args = output?.args ?? {};
 
   if (input.tool === "read") {
-    const filePath = args?.filePath ?? args?.path ?? args?.file_path ?? "";
+    const filePath = args?.filePath ?? "";
     if (!filePath) return;
 
     const result = checkAnatomy(owlDir, projectRoot, filePath, new Set(session.reads.map((r) => r.file_path)));
@@ -45,10 +49,15 @@ export async function handleToolBefore(
   }
 
   if (input.tool === "write" || input.tool === "edit") {
-    const filePath = args?.filePath ?? args?.path ?? args?.file_path ?? "";
-    const content = args?.content ?? args?.newString ?? args?.new_string ?? "";
+    const filePath = args?.filePath ?? "";
+    const content = args?.content ?? args?.newString ?? "";
 
     if (!filePath) return;
+
+    const bugCheck = checkBuglog(owlDir, filePath);
+    if (bugCheck.similarBugs.length > 0) {
+      warnings.push(`BUGLOG: ${bugCheck.similarBugs.length} similar bug(s) on record for ${filePath}`);
+    }
 
     const dnrPatterns = extractDoNotRepeatPatterns(owlDir);
     if (dnrPatterns.length > 0) {

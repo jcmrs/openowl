@@ -8,8 +8,7 @@ export interface RelevanceResult {
   fileEntries: string[];
 }
 
-export function selectRelevantEntries(
-  anatomyContent: string,
+export function selectRelevantEntries(  anatomyContent: string,
   options: RelevanceOptions = { maxFileEntries: 15 }
 ): RelevanceResult {
   if (!anatomyContent || anatomyContent.includes("Pending initial scan")) {
@@ -60,31 +59,4 @@ export function selectRelevantEntries(
     .map((e) => e.line);
 
   return { directorySummaries, fileEntries: selectedFileEntries };
-}
-
-export function selectRelevantBugs(
-  buglogContent: string,
-  relevantFiles: string[]
-): string[] {
-  if (!buglogContent) return [];
-
-  try {
-    const data = JSON.parse(buglogContent);
-    const bugs = data.bugs ?? [];
-    const openBugs = bugs.filter((b: any) => !b.fix || b.fix === "unknown");
-
-    if (openBugs.length === 0) return [];
-
-    const relevantSet = new Set(relevantFiles);
-    const matched = openBugs.filter((b: any) => relevantSet.has(b.file));
-
-    const display = matched.length > 0 ? matched : openBugs.slice(0, 3);
-    return display.slice(0, 5).map((b: any) => {
-      let entry = `- [${b.id}] ${b.file}: ${b.error_message.slice(0, 80)}`;
-      if (b.occurrences > 1) entry += ` (${b.occurrences}x)`;
-      return entry;
-    });
-  } catch {
-    return [];
-  }
 }

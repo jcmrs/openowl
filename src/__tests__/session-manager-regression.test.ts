@@ -88,4 +88,17 @@ describe("session-manager D-07/D-08/D-09 regression", () => {
     expect(raw.reads).toEqual([]);
     expect(raw.writes).toEqual([]);
   });
+
+  it("SILENT-02: initSession verifies write succeeded", () => {
+    initSession(tmpDir, "sess-verify");
+    const sessionPath = path.join(tmpDir, "_session.json");
+    expect(fs.existsSync(sessionPath)).toBe(true);
+  });
+
+  it("readSession returns null for corrupted session file, no crash", () => {
+    const sessionPath = path.join(tmpDir, "_session.json");
+    fs.writeFileSync(sessionPath, "NOT VALID JSON{{{");
+    const session = readSession(tmpDir);
+    expect(session).toBeNull();
+  });
 });

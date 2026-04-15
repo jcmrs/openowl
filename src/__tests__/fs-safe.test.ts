@@ -29,6 +29,15 @@ describe("fs-safe", () => {
       const result = readJSON(filePath, { default: true });
       expect(result).toEqual({ default: true });
     });
+
+    it("strips BOM and normalizes CRLF", () => {
+      const filePath = path.join(tmpDir, "bom.json");
+      const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+      const content = '{"key": "value"}\r\n';
+      fs.writeFileSync(filePath, Buffer.concat([bom, Buffer.from(content, "utf-8")]));
+      const result = readJSON(filePath, null);
+      expect(result).toEqual({ key: "value" });
+    });
   });
 
   describe("readText", () => {
@@ -49,6 +58,21 @@ describe("fs-safe", () => {
       const filePath = path.join(tmpDir, "also-missing.txt");
       const result = readText(filePath);
       expect(result).toBe("");
+    });
+
+    it("strips BOM from file content", () => {
+      const filePath = path.join(tmpDir, "bom.txt");
+      const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+      fs.writeFileSync(filePath, Buffer.concat([bom, Buffer.from("hello world", "utf-8")]));
+      const result = readText(filePath);
+      expect(result).toBe("hello world");
+    });
+
+    it("normalizes CRLF to LF", () => {
+      const filePath = path.join(tmpDir, "crlf.txt");
+      fs.writeFileSync(filePath, "line one\r\nline two\r\nline three");
+      const result = readText(filePath);
+      expect(result).toBe("line one\nline two\nline three");
     });
   });
 

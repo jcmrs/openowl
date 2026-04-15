@@ -65,6 +65,11 @@ export function initSession(owlDir: string, sessionId: string): SessionState {
   };
 
   writeJSON(getSessionPath(owlDir), state);
+
+  if (!fs.existsSync(getSessionPath(owlDir))) {
+    console.error("[OpenOwl] CRITICAL: Failed to write session state file");
+  }
+
   try {
     incrementSessions(owlDir);
   } catch {
