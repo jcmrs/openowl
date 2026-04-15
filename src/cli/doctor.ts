@@ -63,10 +63,10 @@ function checkPluginInstall(projectRoot: string): CheckResult {
   }
 
   const content = readText(pluginPath);
-  if (content.includes("experimental.chat.system.transform")) {
-    return { name: "OpenCode plugin", status: "pass", message: "Injection hook registered" };
+  if (content.includes("OpenOwlPlugin") || content.includes("experimental.chat.system.transform")) {
+    return { name: "OpenCode plugin", status: "pass", message: "Plugin registered" };
   }
-  return { name: "OpenCode plugin", status: "warn", message: "Installed but missing injection hook" };
+  return { name: "OpenCode plugin", status: "warn", message: "Installed but may be misconfigured" };
 }
 
 function checkAgentsMd(projectRoot: string): CheckResult {
@@ -76,8 +76,8 @@ function checkAgentsMd(projectRoot: string): CheckResult {
   }
 
   const content = readText(agentsMd);
-  if (content.includes(".owl/OWL.md")) {
-    return { name: "AGENTS.md", status: "pass", message: "References .owl/OWL.md" };
+  if (content.includes(".owl/OWL.md") || content.includes("OpenOwl")) {
+    return { name: "AGENTS.md", status: "pass", message: "References OpenOwl" };
   }
   return { name: "AGENTS.md", status: "warn", message: "Exists but does not reference OpenOwl" };
 }
