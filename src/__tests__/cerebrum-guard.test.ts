@@ -4,7 +4,6 @@ import { extractDoNotRepeatPatterns, checkDoNotRepeat } from "../plugin/context/
 describe("cerebrum-guard", () => {
   it("extracts patterns from Do-Not-Repeat section", () => {
     const patterns = extractDoNotRepeatPatterns("tests/fixtures");
-    // Should not throw, returns empty array for nonexistent file
     expect(Array.isArray(patterns)).toBe(true);
   });
 
@@ -13,23 +12,50 @@ describe("cerebrum-guard", () => {
     expect(match).toBeNull();
   });
 
-  it("requires minimum 3 matching tokens and threshold > 0.6", () => {
+  it("matches quoted strings with word boundaries", () => {
     const patterns = [
-      { line: "use const not var", pattern: "use const not var" },
+      { line: 'Never use "var" in TypeScript', patterns: ["var"] },
     ];
-    // "const x = 1" — only 1 matching token — should NOT match
     const match1 = checkDoNotRepeat("const x = 1;", patterns);
     expect(match1).toBeNull();
 
-    // Short pattern diluted by many unique tokens in content — should NOT match (Jaccard < 0.6)
-    const match2 = checkDoNotRepeat("You should always use const not var in this project", patterns);
-    expect(match2).toBeNull();
+    const match2 = checkDoNotRepeat("var result = compute();", patterns);
+    expect(match2).not.toBeNull();
+    expect(match2!.line).toContain("var");
+  });
 
-    // High-density match — should match
-    const patterns2 = [
-      { line: "always use const not var never let", pattern: "always use const not var never let" },
+  it("does not match substrings", () => {
+    const patterns = [
+      { line: 'Never use "var" in TypeScript', patterns: ["var"] },
     ];
-    const match3 = checkDoNotRepeat("Please always use const not var never let in this code", patterns2);
-    expect(match3).not.toBeNull();
+    const match = checkDoNotRepeat("const variable = 1;", patterns);
+    expect(match).toBeNull();
+  });
+
+  it("extracts patterns from 'never use X' phrases", () => {
+    const patterns = [
+      { line: "Never use setTimeout for polling", patterns: ["setTimeout"] },
+    ];
+    const match1 = checkDoNotRepeat("const timer = setInterval(() => {}, 1000);", patterns);
+    expect(match1).toBeNull();
+
+    const match2 = checkDoNotRepeat("setTimeout(() => {}, 1000);", patterns);
+    expect(match2).not.toBeNull();
+  });
+
+  it("matches case-insensitively", () => {
+    const patterns = [
+      { line: 'Never use "Var" anywhere', patterns: ["Var"] },
+    ];
+    const match = checkDoNotRepeat("var x = 1;", patterns);
+    expect(match).not.toBeNull();
+  });
+
+  it("skips entries with no extractable patterns", () => {
+    const patterns = [
+      { line: "some general advice without quotes", patterns: [] },
+    ];
+    const match = checkDoNotRepeat("anything at all", patterns);
+    expect(match).toBeNull();
   });
 });

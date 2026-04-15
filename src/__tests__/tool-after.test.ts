@@ -67,7 +67,7 @@ describe("handleToolAfter", () => {
     expect(anatomyContent).toContain("new-file.ts");
 
     const memoryContent = fs.readFileSync(path.join(owlDir, "memory.md"), "utf-8");
-    expect(memoryContent).toContain("edited");
+    expect(memoryContent).toContain("Created");
   });
 
   it("resolves read by callID and logs memory for read tool", async () => {
@@ -128,6 +128,8 @@ describe("handleToolAfter", () => {
 
     const session = JSON.parse(fs.readFileSync(path.join(owlDir, "_session.json"), "utf-8"));
     session.edits_by_file = { [targetFile]: 3 };
+    session.churn_warned_files = [];
+    session.auto_bug_log_count = 0;
     fs.writeFileSync(path.join(owlDir, "_session.json"), JSON.stringify(session));
 
     const warnings: string[] = [];

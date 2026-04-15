@@ -9,14 +9,27 @@ const SECTION_HEADERS: Record<CerebrumSection, string> = {
   "decision-log": "## Decision Log",
 };
 
+const MAX_RECENT_ENTRIES_FOR_DEDUP = 5;
+
+function normalizeEntryText(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, " ").replace(/\d{4}-\d{2}-\d{2}/g, "").trim();
+}
+
 export function appendCerebrumEntry(
   owlDir: string,
   section: CerebrumSection,
   scope: string,
   text: string
-): void {
+): boolean {
   const cerebrumPath = path.join(owlDir, "cerebrum.md");
   let content = readText(cerebrumPath) || "";
+
+  const normalizedText = normalizeEntryText(text);
+  const normalizedScope = scope.toLowerCase();
+
+  if (hasRecentDuplicate(content, section, normalizedScope, normalizedText)) {
+    return false;
+  }
 
   const date = new Date().toISOString().slice(0, 10);
   const entry = `  - [${scope}] ${date}: ${text}`;
@@ -41,6 +54,32 @@ export function appendCerebrumEntry(
   }
 
   writeText(cerebrumPath, content);
+  return true;
+}
+
+function hasRecentDuplicate(
+  content: string,
+  section: CerebrumSection,
+  scope: string,
+  text: string
+): boolean {
+  const header = SECTION_HEADERS[section];
+  const headerIdx = content.search(new RegExp(`^${escapeRegex(header)}$`, "im"));
+  if (headerIdx === -1) return false;
+
+  const nextSection = content.indexOf("\n## ", headerIdx + 1);
+  const sectionContent = nextSection === -1 ? content.slice(headerIdx) : content.slice(headerIdx, nextSection);
+
+  const lines = sectionContent.split("\n").filter((l) => l.trim().startsWith("- ["));
+  const recent = lines.slice(-MAX_RECENT_ENTRIES_FOR_DEDUP);
+
+  for (const line of recent) {
+    const normalized = normalizeEntryText(line);
+    if (normalized.includes(scope) && normalized.includes(text)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function escapeRegex(s: string): string {

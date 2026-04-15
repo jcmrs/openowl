@@ -15,6 +15,8 @@ export interface SessionState {
   total_write_tokens: number;
   cerebrum_updated: boolean;
   buglog_entries: string[];
+  auto_bug_log_count: number;
+  churn_warned_files: string[];
   pending_read_call_ids?: Record<string, number>;
 }
 
@@ -63,6 +65,8 @@ export function initSession(owlDir: string, sessionId: string): SessionState {
     total_write_tokens: 0,
     cerebrum_updated: false,
     buglog_entries: [],
+    auto_bug_log_count: 0,
+    churn_warned_files: [],
   };
 
   writeJSON(getSessionPath(owlDir), state);
@@ -78,10 +82,11 @@ export function initSession(owlDir: string, sessionId: string): SessionState {
   }
 
   const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   appendText(
     path.join(owlDir, "memory.md"),
-    `\n| ${timeStr} | Session started | — | — | ~0 |\n`
+    `\n## Session: ${dateStr} ${timeStr}\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`
   );
 
   return state;
@@ -192,19 +197,22 @@ export function finalizeSession(owlDir: string): void {
     console.error("[OpenOwl] Failed to clean up session file:", err);
   }
 
+  const files = state.writes.map((w) => path.basename(w.file_path));
+  const unique = [...new Set(files)];
+  const totalTokens = state.total_read_tokens + state.total_write_tokens;
+  const fileListStr = unique.length > 0 ? unique.join(", ") : "\u2014";
+
   appendText(
     path.join(owlDir, "memory.md"),
-    `\n| --:-- | Session ended | — | ${state.reads.length} reads, ${state.writes.length} writes | ~${state.total_read_tokens + state.total_write_tokens} tokens |\n`
+    `\n| --:-- | Session end: ${state.writes.length} write(s) across ${unique.length} file(s) (${fileListStr}) | ${state.reads.length} reads | ~${totalTokens} tokens |\n`
   );
 
-  if (state.writes.length > 0) {
-    const files = state.writes.map((w) => path.basename(w.file_path));
-    const unique = [...new Set(files)];
+  if (state.writes.length >= 2) {
     appendCerebrumEntry(
       owlDir,
       "key-learnings",
       "session",
-      `Session modified ${unique.length} file(s): ${unique.join(", ")} (${state.reads.length} reads, ${state.total_read_tokens + state.total_write_tokens} tokens)`
+      `Modified ${unique.length} file(s): ${unique.join(", ")} (${state.reads.length} reads, ~${totalTokens} tokens)`
     );
   }
 }

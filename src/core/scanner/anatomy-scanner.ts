@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { execSync } from "node:child_process";
 import { extractDescription, capDescription } from "./description-extractor.js";
 import { generateDescriptions, generateDirectorySummary, type DescriptionResult } from "./description-generator.js";
 import { readJSON } from "../utils/fs-safe.js";
@@ -314,7 +315,7 @@ export function buildAnatomy(owlDir: string, projectRoot: string): { content: st
 
 function hasOpenCodeCLI(): boolean {
   try {
-    require("node:child_process").execSync("opencode --version", { stdio: "ignore", timeout: 5000 });
+    execSync("opencode --version", { stdio: "ignore", timeout: 5000 });
     return true;
   } catch {
     return false;

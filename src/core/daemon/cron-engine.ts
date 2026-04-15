@@ -386,8 +386,13 @@ export class CronEngine {
           ...parsed,
         });
       } catch {
-        if (result.includes("## User Preferences") || result.includes("## Key Learnings") || result.includes("# Cerebrum")) {
-          writeText(path.join(this.owlDir, "cerebrum.md"), result);
+        const cerebrumMarkers = ["## User Preferences", "## Key Learnings", "## Do-Not-Repeat", "# Cerebrum"];
+        const markerCount = cerebrumMarkers.filter((m) => result.includes(m)).length;
+        if (markerCount >= 2) {
+          const stagingPath = path.join(this.owlDir, "_tmp", `cerebrum-update-${Date.now()}.md`);
+          writeText(stagingPath, result);
+          this.logger.warn(`AI cerebrum update written to staging: ${stagingPath}. Review before applying.`);
+          this.broadcast({ type: "cerebrum_update_staged", path: stagingPath });
         }
       }
     } catch (err) {

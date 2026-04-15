@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import { logBug } from "../../core/buglog/bug-tracker.js";
 import { appendCerebrumEntry } from "./cerebrum-logger.js";
 
@@ -122,7 +123,8 @@ export function detectBugFix(
 export function autoLogBug(
   owlDir: string,
   filePath: string,
-  result: { detected: boolean; category: string; tags: string[]; summary: string }
+  result: { detected: boolean; category: string; tags: string[]; summary: string },
+  session?: { auto_bug_log_count: number }
 ): void {
   if (!result.detected) return;
 
@@ -134,5 +136,8 @@ export function autoLogBug(
     tags: result.tags,
   });
 
-  appendCerebrumEntry(owlDir, "key-learnings", "auto", `Bug pattern detected in ${filePath}: ${result.category}. Logged to buglog.`);
+  if (session && session.auto_bug_log_count < 3) {
+    appendCerebrumEntry(owlDir, "key-learnings", "auto", `Bug pattern detected in ${path.basename(filePath)}: ${result.category}. Logged to buglog.`);
+    session.auto_bug_log_count++;
+  }
 }

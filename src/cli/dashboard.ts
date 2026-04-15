@@ -82,8 +82,7 @@ export async function dashboardCommand(): Promise<void> {
   console.log(`  Opening ${url}...`);
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const open = require("open");
+    const { default: open } = await import("open" as string);
     await open(url);
   } catch {
     console.log(`  Could not open browser. Visit: ${url}`);

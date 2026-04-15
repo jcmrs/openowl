@@ -5,6 +5,7 @@ import { estimateTokens } from "../context/token-tracker.js";
 import { detectBugFix, autoLogBug } from "../context/bug-detector.js";
 import { readSession, writeSession, resolveReadByCallID } from "../context/session-manager.js";
 import { appendCerebrumEntry } from "../context/cerebrum-logger.js";
+import { summarizeEdit } from "../context/edit-summarizer.js";
 
 interface ToolAfterInput {
   tool: string;
@@ -54,21 +55,35 @@ export async function handleToolAfter(
 
     const content = input.args?.content ?? input.args?.newString ?? "";
     const tokens = estimateTokens(content, filePath);
-    const summary = path.basename(filePath);
+    const basename = path.basename(filePath);
+    const relativePath = path.relative(projectRoot, filePath).replace(/\\/g, "/");
 
-    logToMemory(owlDir, `edited ${summary}`, filePath, "written", tokens);
+    let outcome: string;
+    let action: string;
+    if (input.tool === "edit") {
+      const oldContent = input.args?.oldString ?? "";
+      outcome = (oldContent && content) ? summarizeEdit(oldContent, content, basename) : "\u2014";
+      action = `Edited ${basename}`;
+    } else {
+      outcome = `\u2014`;
+      action = `Created ${basename}`;
+    }
+
+    logToMemory(owlDir, action, relativePath, outcome, tokens);
 
     const editCount = session.edits_by_file[filePath] ?? 0;
-    if (editCount >= 3) {
+    if (editCount === 3 && !session.churn_warned_files.includes(filePath)) {
       warnings.push(`MULTI-EDIT: ${filePath} has been edited ${editCount} times this session — this may indicate a bug`);
-      appendCerebrumEntry(owlDir, "key-learnings", "auto", `${filePath} edited ${editCount} times this session — possible instability`);
+      appendCerebrumEntry(owlDir, "key-learnings", "auto", `${path.basename(filePath)} edited ${editCount} times this session — possible instability`);
+      session.churn_warned_files.push(filePath);
+      writeSession(owlDir, session);
     }
 
     const oldContent = input.args?.oldString ?? "";
     if (content) {
       const bugResult = detectBugFix(filePath, content, oldContent);
       if (bugResult.detected) {
-        autoLogBug(owlDir, filePath, bugResult);
+        autoLogBug(owlDir, filePath, bugResult, session);
         warnings.push(`BUG DETECTED: ${bugResult.summary}`);
       }
     }

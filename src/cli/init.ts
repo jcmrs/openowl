@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { execSync } from "node:child_process";
 import { findProjectRoot } from "../core/scanner/project-root.js";
 import { scanProject } from "../core/scanner/anatomy-scanner.js";
 import { readJSON, writeJSON, readText, writeText } from "../core/utils/fs-safe.js";
@@ -108,7 +109,6 @@ export async function initCommand(): Promise<void> {
         const pm = detectPackageManager(projectRoot);
         const installCmd = pm === "pnpm" ? "pnpm add" : pm === "yarn" ? "yarn add" : pm === "bun" ? "bun add" : "npm install";
         console.log(`  Installing opencode-owl as a dependency (${installCmd} opencode-owl)...`);
-        const { execSync } = require("node:child_process");
         execSync(`${installCmd} opencode-owl`, { cwd: projectRoot, stdio: "inherit", timeout: 60000 });
         depInstalled = true;
       } else {
@@ -263,43 +263,65 @@ Review: did you learn anything this session? If yes, add it to \`.owl/cerebrum.m
       version: 1,
       tasks: [
         {
-          id: "anatomy_rescan",
-          name: "Anatomy Rescan",
+          id: "anatomy-rescan",
+          name: "Full anatomy rescan",
           schedule: "0 */6 * * *",
-          description: "Rescan project anatomy every 6 hours",
+          description: "Re-scans project filesystem and reconciles anatomy.md",
           action: { type: "scan_project" },
-          retry: { max_attempts: 2, backoff: "linear", base_delay_seconds: 60 },
-          failsafe: { on_failure: "log", dead_letter: true, alert_after_consecutive_failures: 3 },
+          retry: { max_attempts: 3, backoff: "exponential", base_delay_seconds: 30 },
+          failsafe: { on_failure: "log_and_continue", alert_after_consecutive_failures: 2, dead_letter: true },
           enabled: true,
         },
         {
-          id: "cerebrum_staleness",
-          name: "Cerebrum Staleness Check",
-          schedule: "0 9 * * 1",
-          description: "Check if cerebrum.md is stale (weekly on Monday morning)",
-          action: { type: "check_cerebrum_staleness", params: { max_age_days: 14 } },
-          retry: { max_attempts: 1, backoff: "linear", base_delay_seconds: 30 },
-          failsafe: { on_failure: "log" },
-          enabled: true,
-        },
-        {
-          id: "memory_consolidation",
-          name: "Memory Consolidation",
-          schedule: "0 3 * * 0",
-          description: "Consolidate old memory entries (weekly on Sunday)",
+          id: "memory-consolidation",
+          name: "Consolidate old memory",
+          schedule: "0 2 * * *",
+          description: "Compress memory.md entries older than 7 days",
           action: { type: "consolidate_memory", params: { older_than_days: 7 } },
-          retry: { max_attempts: 2, backoff: "linear", base_delay_seconds: 60 },
-          failsafe: { on_failure: "log", dead_letter: true },
+          retry: { max_attempts: 2, backoff: "exponential", base_delay_seconds: 60 },
+          failsafe: { on_failure: "skip_and_retry_next_cycle", dead_letter: false },
           enabled: true,
         },
         {
-          id: "token_report",
-          name: "Token Waste Report",
-          schedule: "0 10 * * 1",
-          description: "Generate token optimization report (weekly on Monday)",
+          id: "token-audit",
+          name: "Token audit report",
+          schedule: "0 0 * * 1",
+          description: "Weekly waste pattern detection",
           action: { type: "generate_token_report" },
-          retry: { max_attempts: 1, backoff: "linear", base_delay_seconds: 30 },
-          failsafe: { on_failure: "log" },
+          retry: { max_attempts: 2, backoff: "linear", base_delay_seconds: 60 },
+          failsafe: { on_failure: "log_and_continue", dead_letter: true },
+          enabled: true,
+        },
+        {
+          id: "cerebrum-reflection",
+          name: "Cerebrum reflection",
+          schedule: "0 3 * * 0",
+          description: "Weekly AI review of cerebrum.md — prune stale entries, consolidate duplicates",
+          action: {
+            type: "ai_task",
+            params: {
+              prompt: "Review this cerebrum.md. Remove duplicate preferences (keep newer). Remove Do-Not-Repeat entries older than 90 days if no longer relevant. Consolidate Key Learnings that overlap. Keep the file under 2000 tokens. Return the cleaned file content only.",
+              context_files: [".owl/cerebrum.md"],
+            },
+          },
+          retry: { max_attempts: 1, backoff: "none", base_delay_seconds: 0 },
+          failsafe: { on_failure: "log_and_continue", dead_letter: false },
+          enabled: true,
+        },
+        {
+          id: "project-suggestions",
+          name: "AI suggestions",
+          schedule: "0 4 * * 1",
+          description: "Weekly AI analysis with project improvement suggestions",
+          action: {
+            type: "ai_task",
+            params: {
+              prompt: "Based on the recent memory entries and current project structure, provide: 1) Key achievements this week, 2) Code improvements to consider, 3) Logical next tasks, 4) Technical debt or risks. Be specific and actionable. Return as JSON: {achievements:[], improvements:[], next_tasks:[], risks:[]}",
+              context_files: [".owl/memory.md", ".owl/anatomy.md"],
+            },
+          },
+          retry: { max_attempts: 1, backoff: "none", base_delay_seconds: 0 },
+          failsafe: { on_failure: "log_and_continue", dead_letter: false },
           enabled: true,
         },
       ],

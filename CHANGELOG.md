@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.5.0 (2026-04-15)
+
+### Critical Fixes
+- Fix daemon crash on startup: `__dirname` was undefined in ESM scope in `owl-daemon.ts`. The daemon has never successfully started — this unblocks all daemon features (cron engine, file watcher, dashboard).
+- Fix `require()` calls in ESM modules: replaced 4 bare `require()` calls with proper ESM imports in `build-context.ts`, `init.ts`, `dashboard.ts`, and `anatomy-scanner.ts`.
+- Fix Logger ENOENT on first run: `rotateIfNeeded()` now checks `isFile()` before checking size, preventing crash when `daemon.log` doesn't exist yet.
+- Unify cron manifest task IDs between `init.ts` and `cron-manifest.json` template. Init now creates all 5 tasks with correct IDs matching the template.
+
+### Features
+- Edit summarization: new `edit-summarizer.ts` produces human-readable descriptions of what changed (e.g., "added error handling", `"3000" → "5000"`, "modified handleSubmit()"). Memory.md now shows these instead of generic "written".
+- Session headers in memory.md: sessions are now visually separated with `## Session: YYYY-MM-DD HH:MM` headers.
+- Create vs edit distinction: memory.md shows "Created X" for new files, "Edited X" for modifications.
+- Relative paths in memory.md: file paths are now relative to project root instead of absolute.
+
+### Improvements
+- Cerebrum deduplication: `appendCerebrumEntry()` now checks the last 5 entries in the target section and skips if a duplicate already exists (normalized text comparison).
+- Multi-edit churn fires only once per file per session (was firing on every edit ≥ 3).
+- DNR violation warnings no longer auto-log to cerebrum (breaks feedback loop).
+- Bug detection auto-logging to cerebrum rate-limited to 3 per session.
+- Session summaries to cerebrum skipped for single-file sessions (low-information).
+- Cron AI task writes cerebrum updates to a staging file instead of destructively overwriting cerebrum.md.
+
+### DNR Algorithm Overhaul
+- Replaced Jaccard similarity matching with quoted-string extraction + "never use/avoid X" phrase extraction + whole-word case-insensitive regex matching. More precise, lower false-positive rate.
+- DNR violations no longer auto-logged to cerebrum (eliminates recursive noise loop).
+
+### Test Updates
+- Updated `tool-after.test.ts` for new "Created" action string.
+- Updated `tool-after.test.ts` for new `churn_warned_files` session field.
+- Rewrote `cerebrum-guard.test.ts` with 7 tests covering quoted-string matching, word-boundary behavior, case-insensitivity, and no-pattern entries.
+
 ## 0.4.4 (2026-04-15)
 
 ### Features

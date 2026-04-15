@@ -42,6 +42,7 @@ export class Logger {
     if (!this.logFile) return;
     try {
       const stat = fs.statSync(this.logFile);
+      if (!stat.isFile()) return;
       if (stat.size >= MAX_LOG_SIZE) {
         for (let i = MAX_LOG_FILES - 1; i >= 1; i--) {
           const src = i === 1 ? this.logFile : `${this.logFile}.${i - 1}`;

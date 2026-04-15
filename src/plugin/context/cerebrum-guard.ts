@@ -3,7 +3,7 @@ import * as path from "node:path";
 
 interface DoNotRepeatEntry {
   line: string;
-  pattern: string;
+  patterns: string[];
 }
 
 export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
@@ -23,10 +23,8 @@ export function extractDoNotRepeatPatterns(owlDir: string): DoNotRepeatEntry[] {
       }
       if (inDNR && line.match(/^\s*-\s/) && line.length > 4) {
         const text = line.replace(/^\s*-\s+/, "").trim();
-        entries.push({
-          line: text,
-          pattern: text.toLowerCase().replace(/\d+/g, "N").replace(/[^\w\s]/g, " ").trim(),
-        });
+        const patterns = extractPatterns(text);
+        entries.push({ line: text, patterns });
       }
     }
   } catch (err) {
@@ -39,19 +37,48 @@ export function checkDoNotRepeat(content: string, patterns: DoNotRepeatEntry[], 
   if (patterns.length === 0) return null;
 
   const combined = filePath ? `${filePath} ${content}` : content;
-  const normalized = combined.toLowerCase().replace(/\d+/g, "N").replace(/[^\w\s]/g, " ").trim();
-  const contentTokens = new Set(normalized.split(/\s+/).filter((w) => w.length > 2));
 
   for (const entry of patterns) {
-    const entryTokens = new Set(entry.pattern.split(/\s+/).filter((w) => w.length > 2));
-    const intersection = new Set([...contentTokens].filter((x) => entryTokens.has(x)));
-    const union = new Set([...contentTokens, ...entryTokens]);
-    const jaccard = union.size === 0 ? 0 : intersection.size / union.size;
-
-    if (entryTokens.size >= 3 && jaccard > 0.6) {
-      return entry;
+    if (entry.patterns.length === 0) continue;
+    for (const pattern of entry.patterns) {
+      try {
+        const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`\\b${escaped}\\b`, "i");
+        if (regex.test(combined)) {
+          return entry;
+        }
+      } catch {
+        continue;
+      }
     }
   }
 
   return null;
+}
+
+function extractPatterns(text: string): string[] {
+  const patterns: string[] = [];
+
+  const quotedStrs = [...text.matchAll(/(["'`])(.*?)\1/g)].map((m) => m[2]);
+  for (const s of quotedStrs) {
+    const trimmed = s.trim();
+    if (trimmed.length > 0 && trimmed.length < 80) {
+      patterns.push(trimmed);
+    }
+  }
+
+  const avoidPhrases = [
+    /(?:never use|avoid|don't use|do not use|never call|never import|never access)\s+(\w+)/gi,
+  ];
+  for (const re of avoidPhrases) {
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text)) !== null) {
+      const word = match[1];
+      if (word && word.length > 1 && !patterns.includes(word)) {
+        patterns.push(word);
+      }
+    }
+  }
+
+  return [...new Set(patterns)];
 }

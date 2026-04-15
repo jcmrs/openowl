@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { readText, readJSON } from "../../core/utils/fs-safe.js";
 import { selectRelevantEntries } from "./relevance.js";
@@ -100,7 +101,7 @@ function buildProjectSection(owlDir: string, projectRoot: string): string {
   let description = "";
 
   try {
-    const pkg = JSON.parse(require("node:fs").readFileSync(pkgPath, "utf-8"));
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
     if (pkg.name) name = pkg.name;
     if (pkg.description) description = pkg.description;
   } catch {}
