@@ -99,7 +99,7 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
         console.error("[OpenOwl] Error in tool.execute.before:", err);
       }
       if (warnings.length > 0) {
-        console.error(`[OpenOwl] tool.before warnings for ${input.callID}:`, warnings);
+        try { require("node:fs").appendFileSync(path.join(owlDir, "_debug.log"), `[before ${input.callID}] ${warnings.join("; ")}\n`); } catch {}
         pendingWarnings.set(input.callID, warnings);
       }
       await logWarnings(warnings);
@@ -122,7 +122,7 @@ export const OpenOwlPlugin: Plugin = async (ctx) => {
       }
 
       if (warnings.length > 0) {
-        console.error(`[OpenOwl] tool.after ${warnings.length} warnings, output.output type: ${typeof output.output}, has output: ${!!output.output}`);
+        try { require("node:fs").appendFileSync(path.join(owlDir, "_debug.log"), `[after ${input.callID}] warnings=${warnings.length} outputType=${typeof output.output} hasOutput=${!!output.output}\n`); } catch {}
         if (typeof output.output === "string") {
           const prefix = "\n\n[OpenOwl] ";
           const warningText = warnings.map((w) => `${prefix}${w}`).join("\n");

@@ -2,10 +2,6 @@
 
 > OpenOwl's cross-session learning memory. The plugin injects relevant entries into your system context every turn — you don't need to read this file before coding. Update it when you learn something new.
 
-## Do-Not-Repeat
-
-<!-- Mistakes that MUST NOT recur. These are the highest-priority entries. -->
-
 ## Key Learnings
 
 <!-- Project conventions discovered during development. Add with [scope] tags. -->
@@ -17,3 +13,7 @@
 ## Decision Log
 
 <!-- Architectural decisions with rationale. -->
+
+## Do-Not-Repeat
+
+<!-- Mistakes that MUST NOT recur. These are the highest-priority entries. -->
