@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (2026-04-15)
+
+### Bug Fixes
+- Fix conventions section in injection: legacy branch iterated empty `conventionEntries` instead of `legacyEntries`, producing empty output. Parsed branch used `slice(0, 8)` (oldest) instead of `slice(-8)` (most recent).
+
 ## 0.6.0 (2026-04-15)
 
 ### Bug Detection Enhancement
