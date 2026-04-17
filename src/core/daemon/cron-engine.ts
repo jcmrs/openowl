@@ -121,6 +121,15 @@ export class CronEngine {
     const startTime = Date.now();
     this.logger.info(`Executing task: ${task.name}`);
 
+    const sessionGuardedActions = new Set(["scan_project", "consolidate_memory"]);
+    if (sessionGuardedActions.has(task.action.type)) {
+      const sessionPath = path.join(this.owlDir, "_session.json");
+      if (fs.existsSync(sessionPath)) {
+        this.logger.info(`Skipping ${task.name}: active session in progress`);
+        return;
+      }
+    }
+
     try {
       await this.runAction(task.action);
       const duration = Date.now() - startTime;

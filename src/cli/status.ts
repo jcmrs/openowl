@@ -94,8 +94,13 @@ export async function statusCommand(): Promise<void> {
     { engine_status: "unknown", last_heartbeat: null }
   );
   console.log(`\nDaemon: ${cronState.engine_status}`);
-  if (cronState.last_heartbeat) {
-    const elapsed = Date.now() - new Date(cronState.last_heartbeat).getTime();
+  let lastHeartbeat: string | null = null;
+  try {
+    lastHeartbeat = fs.readFileSync(path.join(owlDir, "_heartbeat"), "utf-8").trim() || null;
+  } catch {}
+  if (!lastHeartbeat) lastHeartbeat = cronState.last_heartbeat;
+  if (lastHeartbeat) {
+    const elapsed = Date.now() - new Date(lastHeartbeat).getTime();
     const mins = Math.floor(elapsed / 60000);
     console.log(`  Last heartbeat: ${mins} minutes ago`);
   }

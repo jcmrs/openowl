@@ -20,7 +20,7 @@ const owlDir = path.join(projectRoot, ".owl");
 
 interface OwlConfig {
   openowl: {
-    daemon: { port: number; log_level: string };
+    daemon: { log_level: string };
     dashboard: { enabled: boolean; port: number };
     cron: { enabled: boolean; heartbeat_interval_minutes: number };
   };
@@ -28,7 +28,7 @@ interface OwlConfig {
 
 const rawConfig = readJSON<any>(path.join(owlDir, "config.json"), {
   openowl: {
-    daemon: { port: 18790, log_level: "info" },
+    daemon: { log_level: "info" },
     dashboard: { enabled: true, port: 18791 },
     cron: { enabled: true, heartbeat_interval_minutes: 30 },
   },
@@ -121,9 +121,11 @@ function detectProjectMeta(): { name: string; description: string } {
 
 const projectMeta = detectProjectMeta();
 
+let actualPort = config.openowl.dashboard.port;
+
 app.get("/api/health", (_req, res) => {
   const health = getHealth(owlDir, startTime);
-  res.json(health);
+  res.json({ ...health, port: actualPort });
 });
 
 app.get("/api/project", requireAuth, (_req, res) => {
@@ -184,39 +186,87 @@ app.get("/{*path}", (_req, res) => {
   }
 });
 
-const port = config.openowl.dashboard.port;
-const server = app.listen(port, "127.0.0.1", () => {
-  logger.info(`OpenOwl dashboard server listening on port ${port}`);
-});
+const basePort = config.openowl.dashboard.port;
+const MAX_PORT_ATTEMPTS = 10;
 
-const wss = new WebSocketServer({ server, path: "/ws" });
+function tryListen(port: number): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = app.listen(port, "127.0.0.1", () => {
+      resolve(port);
+    });
+    srv.on("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        reject(err);
+      } else {
+        reject(err);
+      }
+    });
+    (srv as any).__isServer = true;
+  });
+}
 
-wss.on("connection", (ws, req) => {
-  const url = new URL(req.url || "/", `http://localhost:${port}`);
-  const token = url.searchParams.get("token");
-  if (token !== daemonToken) {
-    ws.close(4001, "Unauthorized");
-    return;
-  }
+let server: any = null;
+let wss: WebSocketServer;
+let fileWatcher: ReturnType<typeof startFileWatcher>;
 
-  wsClients.add(ws);
-  logger.info("WebSocket client connected");
-
-  ws.on("message", (data) => {
-    try {
-      const msg = JSON.parse(data.toString()) as { type: string; task_id?: string };
-      handleDashboardCommand(msg);
-    } catch {
-      logger.warn("Invalid WebSocket message received");
+function setupWebSocket(): void {
+  wss.on("connection", (ws, req) => {
+    const url = new URL(req.url || "/", `http://localhost:${actualPort}`);
+    const token = url.searchParams.get("token");
+    if (token !== daemonToken) {
+      ws.close(4001, "Unauthorized");
+      return;
     }
-  });
 
-  ws.on("close", () => {
-    wsClients.delete(ws);
-  });
+    wsClients.add(ws);
+    logger.info("WebSocket client connected");
 
-  broadcast({ type: "daemon_started", timestamp: new Date().toISOString() });
-});
+    ws.on("message", (data) => {
+      try {
+        const msg = JSON.parse(data.toString()) as { type: string; task_id?: string };
+        handleDashboardCommand(msg);
+      } catch {
+        logger.warn("Invalid WebSocket message received");
+      }
+    });
+
+    ws.on("close", () => {
+      wsClients.delete(ws);
+    });
+
+    broadcast({ type: "daemon_started", timestamp: new Date().toISOString() });
+  });
+}
+
+async function startServer(): Promise<void> {
+  for (let attempt = 0; attempt < MAX_PORT_ATTEMPTS; attempt++) {
+    const tryPort = basePort + attempt;
+    try {
+      const resolvedPort = await tryListen(tryPort);
+      actualPort = resolvedPort;
+
+      const portPath = path.join(owlDir, "_daemon-port");
+      try {
+        fs.writeFileSync(portPath, String(actualPort), "utf-8");
+      } catch {}
+
+      server = app as any;
+      wss = new WebSocketServer({ server, path: "/ws" });
+      setupWebSocket();
+      logger.info(`OpenOwl dashboard server listening on port ${actualPort}${attempt > 0 ? ` (auto-selected, base was ${basePort})` : ""}`);
+      return;
+    } catch (err: any) {
+      if (err.code === "EADDRINUSE" && attempt < MAX_PORT_ATTEMPTS - 1) {
+        logger.warn(`Port ${tryPort} in use, trying ${tryPort + 1}...`);
+        continue;
+      }
+      logger.error(`Failed to bind to any port from ${basePort} to ${basePort + MAX_PORT_ATTEMPTS - 1}`);
+      process.exit(1);
+    }
+  }
+}
+
+await startServer();
 
 function broadcast(msg: unknown): void {
   const data = JSON.stringify(msg);
@@ -288,14 +338,16 @@ if (config.openowl.cron.enabled) {
   cronEngine.start();
 }
 
-startFileWatcher(owlDir, logger, broadcast);
+fileWatcher = startFileWatcher(owlDir, logger, broadcast);
 
 const heartbeatInterval = Math.max(1, (config.openowl.cron.heartbeat_interval_minutes || 30)) * 60 * 1000;
+const heartbeatPath = path.join(owlDir, "_heartbeat");
 const heartbeatTimer = setInterval(() => {
-  const statePath = path.join(owlDir, "cron-state.json");
-  const state = readJSON<Record<string, unknown>>(statePath, {});
-  state.last_heartbeat = new Date().toISOString();
-  writeJSON(statePath, state);
+  try {
+    fs.writeFileSync(heartbeatPath, new Date().toISOString(), "utf-8");
+  } catch (err) {
+    logger.warn(`Failed to write heartbeat: ${err}`);
+  }
   broadcast({ type: "health", status: "healthy", uptime: Math.floor((Date.now() - startTime) / 1000) });
 }, heartbeatInterval);
 
@@ -304,6 +356,9 @@ const cronState = readJSON<Record<string, unknown>>(cronStatePath, {});
 cronState.engine_status = "running";
 cronState.last_heartbeat = new Date().toISOString();
 writeJSON(cronStatePath, cronState);
+try {
+  fs.writeFileSync(heartbeatPath, new Date().toISOString(), "utf-8");
+} catch {}
 
 logger.info("OpenOwl daemon started");
 
@@ -314,18 +369,24 @@ function shutdown(): void {
   clearInterval(heartbeatTimer);
   if (cronEngine) cronEngine.stop();
 
+  if (fileWatcher) {
+    fileWatcher.close().catch(() => {});
+  }
+
   const state = readJSON<Record<string, unknown>>(cronStatePath, {});
   state.engine_status = "stopped";
   writeJSON(cronStatePath, state);
 
-  for (const client of wsClients) {
-    client.close();
-  }
-  wsClients.clear();
+  wss.close(() => {
+    for (const client of wsClients) {
+      client.close();
+    }
+    wsClients.clear();
 
-  server.close(() => {
-    logger.info("Daemon stopped");
-    process.exit(0);
+    server.close(() => {
+      logger.info("Daemon stopped");
+      process.exit(0);
+    });
   });
 
   setTimeout(() => process.exit(0), 5000);

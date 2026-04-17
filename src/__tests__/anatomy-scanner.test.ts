@@ -24,8 +24,6 @@ describe("serializeAnatomy with directory summaries", () => {
     const result = serializeAnatomy(sections, {
       lastScanned: "2025-01-01T00:00:00Z",
       fileCount: 3,
-      hits: 0,
-      misses: 0,
     }, dirSummaries);
 
     expect(result).toContain("Main source directory");
@@ -48,8 +46,6 @@ describe("serializeAnatomy with directory summaries", () => {
     const result = serializeAnatomy(sections, {
       lastScanned: "2025-01-01T00:00:00Z",
       fileCount: 1,
-      hits: 0,
-      misses: 0,
     }, dirSummaries);
 
     const lines = result.split("\n");
@@ -68,8 +64,6 @@ describe("serializeAnatomy with directory summaries", () => {
     const result = serializeAnatomy(sections, {
       lastScanned: "2025-01-01T00:00:00Z",
       fileCount: 1,
-      hits: 0,
-      misses: 0,
     });
 
     expect(result).toContain("`src/index.ts`");
@@ -86,8 +80,6 @@ describe("serializeAnatomy with directory summaries", () => {
     const result = serializeAnatomy(sections, {
       lastScanned: "2025-01-01T00:00:00Z",
       fileCount: 3,
-      hits: 0,
-      misses: 0,
     });
 
     const aIdx = result.indexOf("## a-first/");
@@ -108,8 +100,6 @@ describe("serializeAnatomy with directory summaries", () => {
     const result = serializeAnatomy(sections, {
       lastScanned: "2025-01-01T00:00:00Z",
       fileCount: 2,
-      hits: 0,
-      misses: 0,
     });
 
     const appleIdx = result.indexOf("`src/apple.ts`");

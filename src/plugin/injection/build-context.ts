@@ -5,7 +5,7 @@ import { selectRelevantEntries } from "./relevance.js";
 
 const DATA_FILES = ["cerebrum.md", "anatomy.md", "buglog.json", "config.json"];
 let cachedBlock = "";
-let cachedMtime = 0;
+let cachedKey = "";
 
 interface CerebrumEntry {
   tag: string;
@@ -51,8 +51,10 @@ export function buildInjectionContext(
   const cfg = { ...DEFAULT_CONFIG, ...config };
   if (!cfg.enabled) return "";
 
+  const configKey = JSON.stringify(cfg);
   const currentMtime = getLatestMtime(owlDir);
-  if (cachedBlock && cachedMtime === currentMtime) {
+  const cacheKey = `${currentMtime}:${configKey}`;
+  if (cachedBlock && cachedKey === cacheKey) {
     return cachedBlock;
   }
 
@@ -96,7 +98,10 @@ export function buildInjectionContext(
   block += "If you learned something this session worth remembering, append a tagged entry to .owl/cerebrum.md: `- [scope] YYYY-MM-DD: concise description`.\n";
   block += "</owl-context>";
 
-  return trimToTokenBudget(block, cfg.max_tokens, tokenRatios);
+  const result = trimToTokenBudget(block, cfg.max_tokens, tokenRatios);
+  cachedBlock = result;
+  cachedKey = cacheKey;
+  return result;
 }
 
 function getLatestMtime(owlDir: string): number {
@@ -112,7 +117,7 @@ function getLatestMtime(owlDir: string): number {
 
 export function invalidateInjectionCache(): void {
   cachedBlock = "";
-  cachedMtime = 0;
+  cachedKey = "";
 }
 
 function buildProjectSection(owlDir: string, projectRoot: string): string {
@@ -304,34 +309,56 @@ function trimToTokenBudget(block: string, maxTokens: number, tokenRatios?: { cod
   if (estimatedTokens <= maxTokens) return block;
 
   const lines = block.split("\n");
-  const header: string[] = [];
-  const body: string[] = [];
+  const xmlTags: string[] = [];
+  const sections: Array<{ heading: string; bodyLines: string[] }> = [];
+  let current: { heading: string; bodyLines: string[] } | null = null;
 
   for (const line of lines) {
     if (line.startsWith("<owl-context>") || line.startsWith("</owl-context>")) {
-      header.push(line);
+      xmlTags.push(line);
       continue;
     }
     if (line.startsWith("## ")) {
-      header.push(line);
+      if (current) sections.push(current);
+      current = { heading: line, bodyLines: [] };
       continue;
     }
-    body.push(line);
+    if (current) {
+      current.bodyLines.push(line);
+    }
+  }
+  if (current) sections.push(current);
+
+  const contributing = sections.find((s) => s.heading.startsWith("## Contributing"));
+  let contributingLen = 0;
+  if (contributing) {
+    const idx = sections.indexOf(contributing);
+    sections.splice(idx, 1);
+    contributingLen = contributing.heading.length + contributing.bodyLines.reduce((sum, l) => sum + l.length + 1, 0) + 1;
   }
 
-  const maxBodyTokens = (maxTokens * ratio) - header.join("\n").length;
-  let totalLen = header.join("\n").length;
-  const trimmed: string[] = [];
+  const maxChars = maxTokens * ratio;
+  let totalLen = xmlTags.join("\n").length + 1 + contributingLen;
+  const included: Array<{ heading: string; bodyLines: string[] }> = [];
 
-  for (const line of body) {
-    if (totalLen + line.length + 1 > maxBodyTokens) break;
-    trimmed.push(line);
-    totalLen += line.length + 1;
+  for (const section of sections) {
+    const sectionLen = section.heading.length + section.bodyLines.reduce((sum, l) => sum + l.length + 1, 0);
+    if (totalLen + sectionLen > maxChars) break;
+    included.push(section);
+    totalLen += sectionLen;
   }
 
-  if (trimmed.length < body.length) {
-    trimmed.push("<!-- owl-context: truncated for token budget -->");
+  const result: string[] = [...xmlTags];
+  for (const s of included) {
+    result.push(s.heading, ...s.bodyLines);
+  }
+  if (contributing) {
+    result.push(contributing.heading, ...contributing.bodyLines);
   }
 
-  return [...header, ...trimmed].join("\n");
+  if (result.length < lines.length) {
+    result.push("<!-- owl-context: truncated for token budget -->");
+  }
+
+  return result.join("\n");
 }

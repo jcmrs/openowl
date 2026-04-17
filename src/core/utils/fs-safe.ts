@@ -24,17 +24,20 @@ export function writeJSON(filePath: string, data: unknown): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
+  const serialized = JSON.stringify(data, null, 2);
   const tmp = filePath + "." + crypto.randomBytes(4).toString("hex") + ".tmp";
   try {
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf-8");
+    fs.writeFileSync(tmp, serialized, "utf-8");
     fs.renameSync(tmp, filePath);
   } catch (err) {
     console.error(`[OpenOwl] Warning: atomic write failed for ${path.basename(filePath)}: ${err}`);
-    try { fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8"); } catch (writeErr) {
+    try { fs.writeFileSync(filePath, serialized, "utf-8"); } catch (writeErr) {
       console.error(`[OpenOwl] Error: direct write also failed: ${writeErr}`);
     }
     try { fs.unlinkSync(tmp); } catch {}
+    return;
   }
+  verifyWrite(filePath, serialized);
 }
 
 export function readText(filePath: string, fallback: string = ""): string {
@@ -63,6 +66,27 @@ export function writeText(filePath: string, content: string): void {
       console.error(`[OpenOwl] Error: direct write also failed: ${writeErr}`);
     }
     try { fs.unlinkSync(tmp); } catch {}
+    return;
+  }
+  verifyWrite(filePath, content);
+}
+
+function verifyWrite(filePath: string, expected: string): void {
+  try {
+    const actual = normalizeText(fs.readFileSync(filePath, "utf-8"));
+    if (actual !== expected.replace(/\r\n/g, "\n")) {
+      console.error(`[OpenOwl] Write verification failed for ${path.basename(filePath)}. Retrying.`);
+      const tmp = filePath + "." + crypto.randomBytes(4).toString("hex") + ".tmp";
+      try {
+        fs.writeFileSync(tmp, expected, "utf-8");
+        fs.renameSync(tmp, filePath);
+      } catch (retryErr) {
+        console.error(`[OpenOwl] Write retry also failed for ${path.basename(filePath)}: ${retryErr}`);
+        try { fs.unlinkSync(tmp); } catch {}
+      }
+    }
+  } catch {
+    // Verification read failed — file may not exist yet in edge cases, not critical
   }
 }
 

@@ -6,7 +6,7 @@ describe("config validation", () => {
     const config = {
       version: 1,
       openowl: {
-        daemon: { port: 18790, log_level: "info" },
+        daemon: { log_level: "info" },
         dashboard: { enabled: true, port: 18791 },
         cron: { enabled: true, heartbeat_interval_minutes: 30 },
       },
@@ -14,17 +14,15 @@ describe("config validation", () => {
     expect(validateConfig(config as any)).toHaveLength(0);
   });
 
-  it("warns about invalid port", () => {
+  it("warns about invalid dashboard port", () => {
     const config = {
       version: 1,
       openowl: {
-        daemon: { port: 99999, log_level: "info" },
-        dashboard: { enabled: true, port: 18791 },
-        cron: { enabled: true, heartbeat_interval_minutes: 30 },
+        dashboard: { port: 99999 },
       },
     };
     const warnings = validateConfig(config as any);
-    expect(warnings.some((w: any) => w.path.includes("daemon.port"))).toBe(true);
+    expect(warnings.some((w: any) => w.path.includes("dashboard.port"))).toBe(true);
   });
 
   it("warns about invalid token ratio", () => {
@@ -53,15 +51,14 @@ describe("config validation", () => {
     const config = {
       version: 1,
       openowl: {
-        daemon: { port: -1, log_level: "info" },
+        daemon: { log_level: "info" },
         dashboard: { enabled: true, port: 99999 },
         cron: { enabled: true, heartbeat_interval_minutes: 0 },
       },
     };
     const sanitized = sanitizeConfig(config as any);
-    expect(sanitized.openowl.daemon.port).toBe(18790);
-    expect(sanitized.openowl.dashboard.port).toBe(18791);
-    expect(sanitized.openowl.cron.heartbeat_interval_minutes).toBe(30);
+    expect(sanitized.openowl.dashboard?.port).toBe(18791);
+    expect(sanitized.openowl.cron?.heartbeat_interval_minutes).toBe(30);
   });
 
   it("sanitizeConfig returns as-is when openowl is undefined", () => {

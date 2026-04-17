@@ -1,24 +1,33 @@
-import * as fs from "node:fs";
 import * as path from "node:path";
-import { watch } from "chokidar";
+import { watch, type FSWatcher } from "chokidar";
 import type { Logger } from "../../core/utils/logger.js";
+
+const DEBOUNCE_MS = 500;
+const daemonFiles = new Set([
+  "_heartbeat",
+  "daemon-token",
+  "_session.json",
+  "cron-state.json",
+  "daemon.log",
+]);
 
 export function startFileWatcher(
   owlDir: string,
   logger: Logger,
   broadcast: (msg: unknown) => void
-): void {
+): FSWatcher {
+  const debounceTimers = new Map<string, NodeJS.Timeout>();
+
   const watcher = watch(owlDir, {
     ignoreInitial: true,
     ignored: [
       "**/*.tmp",
       "**/daemon.log",
+      "**/_heartbeat",
+      "**/daemon-token",
+      "**/_session.json",
     ],
     persistent: true,
-    awaitWriteFinish: {
-      stabilityThreshold: 500,
-      pollInterval: 100,
-    },
   });
 
   watcher.on("change", (filePath) => {
@@ -26,15 +35,19 @@ export function startFileWatcher(
     const fileName = path.basename(filePath as string);
     logger.debug(`File changed: ${relativePath}`);
 
-    try {
-      const content = fs.readFileSync(filePath as string, "utf-8");
+    if (daemonFiles.has(fileName)) return;
+
+    const existing = debounceTimers.get(relativePath);
+    if (existing) clearTimeout(existing);
+
+    debounceTimers.set(relativePath, setTimeout(() => {
+      debounceTimers.delete(relativePath);
       broadcast({
         type: "file_changed",
         file: relativePath,
-        content,
         timestamp: new Date().toISOString(),
       });
-    } catch {}
+    }, DEBOUNCE_MS));
 
     if (fileName === "config.json") {
       logger.info("Config changed - restart daemon to apply");
@@ -47,13 +60,32 @@ export function startFileWatcher(
 
   watcher.on("add", (filePath) => {
     const relativePath = path.relative(owlDir, filePath as string);
+    const fileName = path.basename(filePath as string);
     logger.debug(`File added: ${relativePath}`);
+
+    if (daemonFiles.has(fileName)) return;
+
+    broadcast({
+      type: "file_added",
+      file: relativePath,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   watcher.on("unlink", (filePath) => {
     const relativePath = path.relative(owlDir, filePath as string);
+    const fileName = path.basename(filePath as string);
     logger.debug(`File removed: ${relativePath}`);
+
+    if (daemonFiles.has(fileName)) return;
+
+    broadcast({
+      type: "file_removed",
+      file: relativePath,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   logger.info("File watcher started on .owl/");
+  return watcher;
 }

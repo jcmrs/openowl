@@ -2,8 +2,7 @@ import * as path from "node:path";
 import { checkAnatomy } from "../context/anatomy-guard.js";
 import { checkBuglog } from "../context/buglog-guard.js";
 import { extractDoNotRepeatPatterns, checkDoNotRepeat } from "../context/cerebrum-guard.js";
-import { initSession, readSession, recordRead, recordWrite, writeSession } from "../context/session-manager.js";
-import { estimateTokens } from "../context/token-tracker.js";
+import { initSession, readSession, recordRead, writeSession } from "../context/session-manager.js";
 
 interface ToolBeforeInput {
   tool: string;
@@ -69,9 +68,5 @@ export async function handleToolBefore(
         warnings.push(`CEREBRUM DNR: This change may repeat a known mistake: "${match.line}"`);
       }
     }
-
-    const estimatedTokens = estimateTokens(content, filePath);
-    recordWrite(session, filePath, `${input.tool} on ${path.basename(filePath)}`, estimatedTokens);
-    writeSession(owlDir, session);
   }
 }

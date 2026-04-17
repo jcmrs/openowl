@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { readJSON } from "../../core/utils/fs-safe.js";
 
@@ -9,7 +10,17 @@ interface HealthStatus {
   dead_letters: number;
 }
 
+function readHeartbeat(owlDir: string): string | null {
+  try {
+    return fs.readFileSync(path.join(owlDir, "_heartbeat"), "utf-8").trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export function getHealth(owlDir: string, startTime: number): HealthStatus {
+  const heartbeat = readHeartbeat(owlDir);
+
   const cronState = readJSON<{
     last_heartbeat: string | null;
     dead_letter_queue: unknown[];
@@ -31,7 +42,7 @@ export function getHealth(owlDir: string, startTime: number): HealthStatus {
   return {
     status,
     uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
-    last_heartbeat: cronState.last_heartbeat,
+    last_heartbeat: heartbeat ?? cronState.last_heartbeat,
     tasks: manifest.tasks.length,
     dead_letters: deadLetterCount,
   };

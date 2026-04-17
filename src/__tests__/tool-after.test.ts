@@ -98,7 +98,7 @@ describe("handleToolAfter", () => {
     expect(updated.reads[0].actual_tokens).toBeGreaterThan(0);
   });
 
-  it("detects bug patterns in written content and populates warnings", async () => {
+  it("does not auto-detect bugs (disabled)", async () => {
     const targetFile = path.join(projectRoot, "src", "fix.ts");
     fs.mkdirSync(path.dirname(targetFile), { recursive: true });
     fs.writeFileSync(targetFile, "");
@@ -112,13 +112,11 @@ describe("handleToolAfter", () => {
       warnings
     );
 
-    expect(warnings.length).toBeGreaterThanOrEqual(1);
     const bugWarning = warnings.find((w: string) => w.includes("BUG DETECTED"));
-    expect(bugWarning).toBeDefined();
+    expect(bugWarning).toBeUndefined();
 
     const bugLogPath = path.join(owlDir, "buglog.json");
-    const exists = fs.existsSync(bugLogPath);
-    expect(exists).toBe(true);
+    expect(fs.existsSync(bugLogPath)).toBe(false);
   });
 
   it("warns about multi-edit on files edited many times", async () => {
@@ -127,7 +125,7 @@ describe("handleToolAfter", () => {
     fs.writeFileSync(targetFile, "");
 
     const session = JSON.parse(fs.readFileSync(path.join(owlDir, "_session.json"), "utf-8"));
-    session.edits_by_file = { [targetFile]: 3 };
+    session.edits_by_file = { [targetFile]: 2 };
     session.churn_warned_files = [];
     session.auto_bug_log_count = 0;
     fs.writeFileSync(path.join(owlDir, "_session.json"), JSON.stringify(session));

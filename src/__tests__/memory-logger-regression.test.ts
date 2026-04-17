@@ -36,6 +36,7 @@ describe("memory-logger D-03 regression", () => {
     logToMemory(tmpDir, "edit", "src/foo.ts", "success", 100);
 
     const content = fs.readFileSync(path.join(tmpDir, "memory.md"), "utf-8");
+    expect(content).toContain("| Time | Action |");
     expect(content).toContain("edit");
     expect(content).toContain("src/foo.ts");
     expect(content).toContain("~100");
@@ -55,7 +56,7 @@ describe("memory-logger D-03 regression", () => {
     expect(lines.length).toBeLessThanOrEqual(220);
   });
 
-  it("D-03: without > Chronological marker, header is lost after trimming (known bug)", () => {
+  it("D-03: without > Chronological marker, table header is auto-inserted on each log", () => {
     const minimalHeader = "# Memory Log\n\n";
     fs.writeFileSync(path.join(tmpDir, "memory.md"), minimalHeader);
 
@@ -65,8 +66,8 @@ describe("memory-logger D-03 regression", () => {
 
     const content = fs.readFileSync(path.join(tmpDir, "memory.md"), "utf-8");
     const lines = content.split("\n");
-    expect(lines.length).toBeLessThanOrEqual(210);
-    expect(content.startsWith("# Memory Log")).toBe(false);
+    expect(lines.length).toBeLessThanOrEqual(220);
+    expect(content).toContain("| Time | Action |");
   });
 
   it("empty memory.md: logging works (creates content)", () => {
@@ -75,5 +76,6 @@ describe("memory-logger D-03 regression", () => {
 
     const content = fs.readFileSync(path.join(tmpDir, "memory.md"), "utf-8");
     expect(content.length).toBeGreaterThan(0);
+    expect(content).toContain("| Time | Action |");
   });
 });

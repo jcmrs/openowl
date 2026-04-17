@@ -13,13 +13,17 @@ afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
-import { buildInjectionContext } from "../plugin/injection/build-context.js";
+import { buildInjectionContext, invalidateInjectionCache } from "../plugin/injection/build-context.js";
 
 function writeOwlFile(name: string, content: string): void {
   fs.writeFileSync(path.join(tmpDir, name), content, "utf-8");
 }
 
 describe("buildInjectionContext", () => {
+  beforeEach(() => {
+    invalidateInjectionCache();
+  });
+
   it("returns empty string when disabled", () => {
     writeOwlFile("cerebrum.md", "## Do-Not-Repeat\n- test entry");
     const result = buildInjectionContext(tmpDir, tmpDir, { enabled: false });

@@ -12,7 +12,7 @@ Adapted from [OpenWolf](https://github.com/cytostack/openwolf) with all Claude-s
 - **Memory Log** — chronological action log per session
 - **Bug Log** — structured bug database with similarity matching
 - **Token Tracker** — estimates and tracks token usage across sessions
-- **Context Guards** — warns about re-reads, anatomy misses, do-not-repeat violations
+- **Context Guards** — warns about re-reads, anatomy misses, do-not-repeat violations, known bugs
 - **Daemon** — background cron tasks (anatomy rescan, cerebrum staleness, memory consolidation, token reports)
 - **Dashboard** — React-based web UI for project metrics
 
@@ -25,26 +25,26 @@ npx openowl init
 
 This creates `.owl/` with configuration, installs `opencode-owl` as a project dependency, installs the OpenCode plugin, and updates `AGENTS.md`.
 
+After `init`, restart OpenCode to activate the plugin.
+
 ## CLI Commands
+
+All commands use `npx openowl` (local install) or `openowl` (global install):
 
 | Command | Description |
 |---------|-------------|
-| `openowl init` | Initialize OpenOwl in current project |
-| `openowl doctor` | Health check: verify plugin, config, data freshness |
-| `openowl status` | Show project status and session stats |
-| `openowl scan` | Rescan project anatomy |
-| `openowl daemon start` | Start the background daemon (requires pm2) |
-| `openowl daemon stop` | Stop the daemon |
-| `openowl daemon status` | Show daemon status |
-| `openowl daemon restart` | Restart the daemon |
-| `openowl daemon logs` | Show daemon log output |
-| `openowl dashboard` | Launch the web dashboard |
-| `openowl bug search <query>` | Search the bug log |
-| `openowl cron list` | List cron tasks |
-| `openowl cron run <task-id>` | Run a cron task manually |
-| `openowl cron retry <task-id>` | Retry a failed cron task |
-| `openowl update` | Update OpenOwl to latest version |
-| `openowl restore` | Restore .owl/ from backup |
+| `npx openowl init` | Initialize OpenOwl in current project |
+| `npx openowl doctor` | Health check: verify plugin, config, data freshness |
+| `npx openowl status` | Show project status and session stats |
+| `npx openowl scan` | Rescan project anatomy |
+| `npx openowl daemon start` | Start the background daemon (requires pm2) |
+| `npx openowl daemon stop` | Stop the daemon |
+| `npx openowl daemon status` | Show daemon status |
+| `npx openowl daemon restart` | Restart the daemon |
+| `npx openowl daemon logs` | Show daemon log output |
+| `npx openowl bug search <query>` | Search the bug log |
+| `npx openowl cron list` | List cron tasks |
+| `npx openowl cron run <task-id>` | Run a cron task manually |
 
 ## Configuration
 
@@ -75,7 +75,6 @@ Config lives in `.owl/config.json`. Key settings:
       "chars_per_token_prose": 3.8,
       "chars_per_token_mixed": 3.4
     },
-    "daemon": { "port": 18790 },
     "dashboard": { "enabled": true, "port": 18791 }
   }
 }
@@ -89,6 +88,28 @@ The `injection` section controls what gets injected into the system prompt each 
 - `include_*` — toggle individual sections on/off
 - `enabled: false` — disable injection entirely
 
+### Port Auto-Selection
+
+If the configured dashboard port (default 18791) is in use, the daemon automatically tries ports up to +10. The actual port is written to `.owl/_daemon-port`. The CLI reads this file to find the daemon.
+
+### .owl/ File Ownership
+
+| File | Written by | Purpose |
+|------|-----------|---------|
+| `_session.json` | Plugin (ephemeral) | Active session state |
+| `_heartbeat` | Daemon | Heartbeat timestamp |
+| `_daemon-port` | Daemon | Actual bound port |
+| `daemon-token` | Daemon | Dashboard auth token |
+| `daemon.log` | Daemon | Structured log |
+| `memory.md` | Plugin | Session action log |
+| `cerebrum.md` | Plugin + model | Learning memory |
+| `anatomy.md` | Plugin + daemon | File index |
+| `buglog.json` | Plugin | Bug database |
+| `token-ledger.json` | Plugin + daemon | Token usage |
+| `config.json` | CLI + plugin | Configuration |
+| `cron-manifest.json` | CLI | Task definitions |
+| `cron-state.json` | Daemon | Task execution state |
+
 ## Architecture
 
 - **Plugin** (`src/plugin/`) — OpenCode plugin hooks for event monitoring and system prompt injection
@@ -100,7 +121,7 @@ The `injection` section controls what gets injected into the system prompt each 
 
 - Node.js 20+
 - OpenCode >= 1.4.1
-- pm2 (`npm install -g pm2`) — required for daemon commands (`openowl daemon start/stop/status`)
+- pm2 (`npm install -g pm2`) — required for daemon commands
 
 ## License
 

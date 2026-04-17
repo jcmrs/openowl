@@ -64,12 +64,6 @@ export function validateConfig(config: OwlConfig): ConfigWarning[] {
     return warnings;
   }
 
-  if (owl.daemon?.port !== undefined) {
-    if (typeof owl.daemon.port !== "number" || owl.daemon.port < 1 || owl.daemon.port > 65535) {
-      warnings.push({ path: "openowl.daemon.port", message: `Invalid port: ${owl.daemon.port} (must be 1-65535)` });
-    }
-  }
-
   if (owl.dashboard?.port !== undefined) {
     if (typeof owl.dashboard.port !== "number" || owl.dashboard.port < 1 || owl.dashboard.port > 65535) {
       warnings.push({ path: "openowl.dashboard.port", message: `Invalid port: ${owl.dashboard.port} (must be 1-65535)` });
@@ -111,10 +105,6 @@ export function sanitizeConfig(config: OwlConfig): OwlConfig {
   const owl = config.openowl;
 
   if (!owl) return config;
-
-  if (owl.daemon?.port !== undefined && (owl.daemon.port < 1 || owl.daemon.port > 65535 || !isFinite(owl.daemon.port))) {
-    owl.daemon.port = 18790;
-  }
 
   if (owl.dashboard?.port !== undefined && (owl.dashboard.port < 1 || owl.dashboard.port > 65535 || !isFinite(owl.dashboard.port))) {
     owl.dashboard.port = 18791;

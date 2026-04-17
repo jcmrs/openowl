@@ -12,6 +12,11 @@ const __dirname = path.dirname(__filename);
 function getDashboardPort(): number {
   const projectRoot = findProjectRoot();
   const owlDir = path.join(projectRoot, ".owl");
+  const portPath = path.join(owlDir, "_daemon-port");
+  try {
+    const port = parseInt(fs.readFileSync(portPath, "utf-8").trim(), 10);
+    if (port > 0 && port <= 65535) return port;
+  } catch {}
   const config = readJSON<{ openowl: { dashboard: { port: number } } }>(
     path.join(owlDir, "config.json"),
     { openowl: { dashboard: { port: 18791 } } }

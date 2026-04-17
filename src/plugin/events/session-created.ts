@@ -1,5 +1,5 @@
 import { initSession, readSession } from "../context/session-manager.js";
-import { appendText } from "../../core/utils/fs-safe.js";
+import { readText, writeText } from "../../core/utils/fs-safe.js";
 import { stat } from "node:fs/promises";
 
 export async function handleSessionCreated(
@@ -14,10 +14,9 @@ export async function handleSessionCreated(
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10);
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    appendText(
-      `${owlDir}/memory.md`,
-      `\n## Session: ${dateStr} ${timeStr} (resumed)\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`
-    );
+    const memoryPath = `${owlDir}/memory.md`;
+    const existing = readText(memoryPath);
+    writeText(memoryPath, `${existing}\n## Session: ${dateStr} ${timeStr} (resumed)\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`);
   } else {
     initSession(owlDir, sessionId);
   }

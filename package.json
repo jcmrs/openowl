@@ -1,6 +1,6 @@
 {
   "name": "opencode-owl",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Project intelligence, token tracking, and learning memory middleware for OpenCode",
   "type": "module",
   "main": "dist/index.js",

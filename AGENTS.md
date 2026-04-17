@@ -62,4 +62,4 @@ OpenOwl is a TypeScript middleware providing project intelligence, token trackin
 
 ## Open Challenges
 
-- **Dashboard (`src/dashboard/`)**: The React dashboard compiles and ships but has not been audited or polished. It provides read-only views of anatomy, cerebrum, buglog, memory, and token usage. Status: functional but not validated against real `.owl/` data. Needs a dedicated audit pass.
+- **Dashboard (`src/dashboard/`)**: The React dashboard compiles and ships. Phase 3 verified the API is responsive (health endpoint returns correct data). The web UI itself has not been audited for visual correctness. Status: API functional, UI unaudited.

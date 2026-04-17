@@ -2,8 +2,7 @@ import * as path from "node:path";
 import { updateAnatomyAfterWrite } from "../context/anatomy-updater.js";
 import { logToMemory } from "../context/memory-logger.js";
 import { estimateTokens } from "../context/token-tracker.js";
-import { detectBugFix, autoLogBug } from "../context/bug-detector.js";
-import { readSession, writeSession, resolveReadByCallID } from "../context/session-manager.js";
+import { readSession, writeSession, resolveReadByCallID, recordWrite } from "../context/session-manager.js";
 import { appendCerebrumEntry } from "../context/cerebrum-logger.js";
 import { summarizeEdit } from "../context/edit-summarizer.js";
 
@@ -71,21 +70,15 @@ export async function handleToolAfter(
 
     logToMemory(owlDir, action, relativePath, outcome, tokens);
 
+    recordWrite(session, filePath, `${input.tool} on ${path.basename(filePath)}`, tokens);
+    writeSession(owlDir, session);
+
     const editCount = session.edits_by_file[filePath] ?? 0;
     if (editCount === 3 && !session.churn_warned_files.includes(filePath)) {
       warnings.push(`MULTI-EDIT: ${filePath} has been edited ${editCount} times this session — this may indicate a bug`);
       appendCerebrumEntry(owlDir, "key-learnings", "auto", `${path.basename(filePath)} edited ${editCount} times this session — possible instability`);
       session.churn_warned_files.push(filePath);
       writeSession(owlDir, session);
-    }
-
-    const oldContent = input.args?.oldString ?? "";
-    if (content) {
-      const bugResult = detectBugFix(filePath, content, oldContent);
-      if (bugResult.detected) {
-        autoLogBug(owlDir, filePath, bugResult, session);
-        warnings.push(`BUG DETECTED: ${bugResult.summary}`);
-      }
     }
   }
 }

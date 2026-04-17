@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { readJSON, writeJSON, readText, appendText } from "../../core/utils/fs-safe.js";
+  import { readJSON, writeJSON, readText, writeText } from "../../core/utils/fs-safe.js";
 import { addSessionToLedger, incrementSessions } from "../../core/tracker/token-ledger.js";
 import type { SessionEntry } from "../../core/tracker/token-ledger.js";
 import { appendCerebrumEntry } from "./cerebrum-logger.js";
@@ -84,10 +84,9 @@ export function initSession(owlDir: string, sessionId: string): SessionState {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  appendText(
-    path.join(owlDir, "memory.md"),
-    `\n## Session: ${dateStr} ${timeStr}\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`
-  );
+  const memoryPath = path.join(owlDir, "memory.md");
+  const existing = readText(memoryPath);
+  writeText(memoryPath, `${existing}\n## Session: ${dateStr} ${timeStr}\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`);
 
   return state;
 }
@@ -202,10 +201,9 @@ export function finalizeSession(owlDir: string): void {
   const totalTokens = state.total_read_tokens + state.total_write_tokens;
   const fileListStr = unique.length > 0 ? unique.join(", ") : "\u2014";
 
-  appendText(
-    path.join(owlDir, "memory.md"),
-    `\n| --:-- | Session end: ${state.writes.length} write(s) across ${unique.length} file(s) (${fileListStr}) | ${state.reads.length} reads | ~${totalTokens} tokens |\n`
-  );
+  const memoryPath = path.join(owlDir, "memory.md");
+  const existingMemory = readText(memoryPath);
+  writeText(memoryPath, `${existingMemory}\n| --:-- | Session end: ${state.writes.length} write(s) across ${unique.length} file(s) (${fileListStr}) | ${state.reads.length} reads | ~${totalTokens} tokens |\n`);
 
   if (state.writes.length >= 2) {
     appendCerebrumEntry(

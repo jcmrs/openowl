@@ -1,7 +1,9 @@
 import * as path from "node:path";
-import { appendText, readText, writeText } from "../../core/utils/fs-safe.js";
+import { readText, writeText } from "../../core/utils/fs-safe.js";
 
 const MAX_MEMORY_LINES = 200;
+
+const TABLE_HEADER = "| Time | Action | Files | Outcome | Tokens |\n|------|--------|-------|---------|--------|";
 
 export function logToMemory(
   owlDir: string,
@@ -17,6 +19,14 @@ export function logToMemory(
 
   const memoryPath = path.join(owlDir, "memory.md");
   let content = readText(memoryPath) || "";
+
+  if (!content.includes("| Time | Action |")) {
+    if (content.trim().length > 0) {
+      content += "\n";
+    }
+    content += TABLE_HEADER;
+  }
+
   content += newLine;
 
   const lines = content.split("\n");

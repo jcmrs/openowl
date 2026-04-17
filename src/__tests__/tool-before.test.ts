@@ -94,7 +94,7 @@ describe("handleToolBefore", () => {
     expect(warnings[0]).toContain("src/index.ts");
   });
 
-  it("checks DNR and records write for tool write", async () => {
+  it("checks DNR for tool write", async () => {
     const warnings: string[] = [];
     await handleToolBefore(
       owlDir,
@@ -106,10 +106,6 @@ describe("handleToolBefore", () => {
 
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("CEREBRUM DNR");
-
-    const session = JSON.parse(fs.readFileSync(path.join(owlDir, "_session.json"), "utf-8"));
-    expect(session.writes).toHaveLength(1);
-    expect(session.writes[0].file_path).toBe("src/foo.ts");
   });
 
   it("does nothing for bash tool", async () => {

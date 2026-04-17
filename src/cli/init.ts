@@ -251,7 +251,7 @@ Review: did you learn anything this session? If yes, add it to \`.owl/cerebrum.m
         cron: { enabled: true, max_retry_attempts: 3, dead_letter_enabled: true, heartbeat_interval_minutes: 30, ai_command: "opencode -p" },
         memory: { consolidation_after_days: 7, max_entries_before_consolidation: 200 },
         cerebrum: { max_tokens: 2000, reflection_frequency: "weekly" },
-        daemon: { port: 18790, log_level: "info" },
+        daemon: { log_level: "info" },
         dashboard: { enabled: true, port: 18791 },
         designqc: { enabled: true, viewports: [{ name: "desktop", width: 1440, height: 900 }, { name: "mobile", width: 375, height: 812 }], max_screenshots: 6, chrome_path: null },
         injection: { enabled: true, max_tokens: 2500, include_project: true, include_dnr: true, include_conventions: true, include_anatomy: true, include_bugs: true },

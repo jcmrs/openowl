@@ -170,14 +170,14 @@ function walkDir(
 
 export function serializeAnatomy(
   sections: Map<string, AnatomyEntry[]>,
-  metadata: { lastScanned: string; fileCount: number; hits: number; misses: number },
+  metadata: { lastScanned: string; fileCount: number },
   dirSummaries?: Map<string, AnatomyDirectoryMeta>
 ): string {
   const lines: string[] = [
     "# anatomy.md",
     "",
     `> Auto-maintained by OpenOwl. Last scanned: ${metadata.lastScanned}`,
-    `> Files: ${metadata.fileCount} tracked | Anatomy hits: ${metadata.hits} | Misses: ${metadata.misses}`,
+    `> Files: ${metadata.fileCount} tracked`,
     "",
   ];
 
@@ -306,8 +306,6 @@ export function buildAnatomy(owlDir: string, projectRoot: string): { content: st
   const serialized = serializeAnatomy(entries, {
     lastScanned: new Date().toISOString(),
     fileCount,
-    hits: 0,
-    misses: 0,
   }, dirSummaries);
 
   return { content: serialized, fileCount };
@@ -386,8 +384,6 @@ export function updateAnatomyEntry(
   const serialized = serializeAnatomy(sections, {
     lastScanned: new Date().toISOString(),
     fileCount,
-    hits: 0,
-    misses: 0,
   });
 
   writeText(anatomyPath, serialized);

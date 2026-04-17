@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.7.0 (2026-04-17)
+
+### Remediation Program
+
+This release is the result of a comprehensive 6-phase remediation program (Plan 011) that verified every feature at the use boundary and fixed fundamental issues discovered in v0.6.0.
+
+#### Session Lifecycle (Phase 1)
+- Removed broken `sessionActive` boolean flag. Session finalization now relies on `finalizeSession` idempotency — `session.created` fires once per OpenCode session while `session.status:idle` fires per prompt.
+- Moved `recordWrite()` from `tool.execute.before` to `tool.execute.after` — writes are now recorded after the tool succeeds, preventing lost writes from premature session state deletion.
+- Disabled bug auto-detection (was 100% false-positive rate on intentional edits).
+- Removed `session.updated` auto-session-creation (was creating spurious sessions on title changes).
+
+#### Data Integrity (Phase 2)
+- Heartbeat writes to separate `.owl/_heartbeat` file instead of `cron-state.json` (was overwriting execution log on every tick).
+- Cron tasks (`scan_project`, `consolidate_memory`) now skip when `_session.json` exists (active plugin session).
+- All `memory.md` writes converted to atomic `writeText` (was `appendText`, vulnerable to partial writes during consolidation).
+- `writeJSON` and `writeText` now verify content by reading back and comparing; retry once on mismatch.
+
+#### Injection Block (Phase 3)
+- Section-aware trimming: drops entire lowest-priority sections when over token budget instead of greedy line truncation.
+- Contributing text participates in budget calculation (was appended after trimming, potentially exceeding budget).
+- Cache key includes config JSON (config toggle changes no longer return stale cached data).
+- Fixed cache collision bug: `invalidateInjectionCache()` exported and called in test `beforeEach`.
+
+#### Buglog Guard (Phase 3)
+- Removed bidirectional substring matching (was matching large files on common error words). Now unidirectional: file content must contain the error message.
+- Score computed by match type: exact file path = 2.0, content substring = 1.0, sorted descending.
+- Fixed path matching: compares basenames and path suffixes, not just exact equality (tool args provide absolute paths, buglog stores relative names).
+
+#### Memory Logger (Phase 3)
+- Table header (`| Time | Action | ... |`) auto-inserted when missing from `memory.md`.
+
+#### Anatomy Scanner (Phase 3)
+- Removed dead `hits`/`misses` counters from `serializeAnatomy()` output and signature.
+
+#### Daemon Overhaul (Phase 4)
+- File watcher (`startFileWatcher()`) now returns the chokidar instance and is closed properly on shutdown.
+- Removed `awaitWriteFinish` (polling leak risk). Replaced with 500ms debounce for change events.
+- Broadcast sends metadata only (path + timestamp) instead of full file content.
+- Added `file_added` and `file_removed` WebSocket broadcasts.
+- Excluded daemon-written files from watching (`_heartbeat`, `daemon-token`, `_session.json`, `cron-state.json`).
+- Ordered shutdown: cron → file watcher → WebSocket server → HTTP server.
+- Removed dead `daemon.port` config field (server always uses `dashboard.port`).
+- Port auto-selection: tries basePort through basePort+10 on `EADDRINUSE`. Writes actual port to `.owl/_daemon-port`.
+- CLI reads `_daemon-port` for `daemon stop`/`daemon restart` (finds actual port).
+
+#### Packaging (Phase 5)
+- README rewritten: all commands use `npx openowl`, removed dead config fields, added port auto-selection docs, added `.owl/` file ownership table.
+- Init template no longer generates dead `daemon.port` config.
+- AGENTS.md updated with verified feature status.
+
+#### Bug Fixes
+- Fix DNR guard not firing for edits matching cerebrum patterns — tool.before warning now correctly stored in `pendingWarnings` map and appended to tool output in tool.after.
+- Fix buglog guard never matching — was comparing absolute tool paths against relative buglog filenames.
+
+### Test Updates
+- 179 tests pass across 31 files. No regressions from remediation program.
+
 ## 0.6.1 (2026-04-15)
 
 ### Bug Fixes
